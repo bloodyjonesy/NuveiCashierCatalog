@@ -57,10 +57,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const { chromium } = await import("playwright");
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
     await page.setViewportSize(viewport);
-    await page.goto(url, { waitUntil: "networkidle", timeout: 15000 });
+    await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
     await page.waitForTimeout(2000);
 
     ensureThemesDir();
@@ -72,9 +75,14 @@ export async function POST(request: NextRequest) {
     const publicPath = `/themes/${filename}`;
     return NextResponse.json({ path: publicPath });
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     console.error("Screenshot failed:", err);
+    const hint =
+      message.includes("Executable") || message.includes("browserType")
+        ? " Install Chromium in the build step: npx playwright install chromium (or add Chromium to your deploy config)."
+        : "";
     return NextResponse.json(
-      { error: "Screenshot failed. Is Playwright installed? Run: npx playwright install chromium" },
+      { error: `Screenshot failed: ${message}${hint}` },
       { status: 500 }
     );
   }

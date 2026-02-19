@@ -127,33 +127,32 @@ export function AddThemeForm() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <h2 className="text-lg font-medium">Theme details</h2>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="theme_id">Theme ID</Label>
-            <Input
-              id="theme_id"
-              value={themeId}
-              onChange={(e) => setThemeId(e.target.value)}
-              placeholder="e.g. 1805251"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Display name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Dark checkout"
-            />
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-2 min-w-[140px]">
+              <Label htmlFor="theme_id">Theme ID</Label>
+              <Input
+                id="theme_id"
+                value={themeId}
+                onChange={(e) => setThemeId(e.target.value)}
+                placeholder="e.g. 1805251"
+              />
+            </div>
+            <div className="space-y-2 min-w-[180px]">
+              <Label htmlFor="name">Display name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Dark checkout"
+              />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               <input
                 type="checkbox"
                 id="use_demo"
@@ -165,7 +164,7 @@ export function AddThemeForm() {
             </div>
             {!useDemo && (
               <>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-[120px]">
                   <Label htmlFor="merchant_id">Merchant ID</Label>
                   <Input
                     id="merchant_id"
@@ -175,8 +174,8 @@ export function AddThemeForm() {
                     placeholder="Merchant ID"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="site_id">Merchant site ID</Label>
+                <div className="space-y-2 min-w-[100px]">
+                  <Label htmlFor="site_id">Site ID</Label>
                   <Input
                     id="site_id"
                     value={siteId}
@@ -185,7 +184,7 @@ export function AddThemeForm() {
                     placeholder="Site ID"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-[180px]">
                   <Label htmlFor="secret">Secret key</Label>
                   <Input
                     id="secret"
@@ -198,61 +197,59 @@ export function AddThemeForm() {
                 </div>
               </>
             )}
+            <div className="flex gap-2 shrink-0">
+              <Button onClick={loadPreview} disabled={loading}>
+                {loading ? "Loading…" : "Load preview"}
+              </Button>
+              {iframeUrl && (
+                <Button variant="secondary" onClick={() => setIframeUrl(null)}>
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}
-
-          <div className="flex gap-2">
-            <Button onClick={loadPreview} disabled={loading}>
-              {loading ? "Loading…" : "Load preview"}
-            </Button>
-            {iframeUrl && (
-              <Button
-                variant="secondary"
-                onClick={() => setIframeUrl(null)}
-              >
-                Clear
-              </Button>
-            )}
-          </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <h2 className="text-lg font-medium">Preview</h2>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <h2 className="text-lg font-medium">Preview</h2>
+            {iframeUrl && (
+              <p className="text-sm text-muted-foreground">
+                Same aspect as a typical site embed. If it looks correct, click Save below.
+              </p>
+            )}
+          </div>
           {iframeUrl && (
-            <p className="text-sm text-muted-foreground">
-              If the page looks correct, click Save below.
-            </p>
+            <Button
+              onClick={handleSave}
+              disabled={saving || !name.trim() || !themeId.trim()}
+            >
+              {saving ? "Saving…" : "Save theme"}
+            </Button>
           )}
         </CardHeader>
         <CardContent>
           {iframeUrl ? (
-            <div className="w-full overflow-hidden rounded-md border bg-muted min-h-[720px] h-[75vh]">
+            <div className="w-full overflow-hidden rounded-md border bg-muted aspect-video max-h-[70vh]">
               <iframe
                 src={iframeUrl}
                 title="Nuvei hosted page preview"
-                className="w-full h-full min-h-[720px] border-0"
+                className="w-full h-full min-h-[360px] border-0"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
               />
             </div>
           ) : (
-            <div className="w-full min-h-[400px] rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm">
+            <div className="w-full aspect-video max-h-[50vh] rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm bg-muted/30">
               Click &quot;Load preview&quot; to see the hosted page
             </div>
           )}
         </CardContent>
-        <CardFooter>
-          <Button
-            onClick={handleSave}
-            disabled={saving || !iframeUrl || !name.trim() || !themeId.trim()}
-          >
-            {saving ? "Saving…" : "Save theme"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
