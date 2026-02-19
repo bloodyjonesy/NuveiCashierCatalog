@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       screenshot_path,
       screenshot_base64,
-      ...(color_palette.length > 0 && { color_palette }),
+      ...(color_palette != null && color_palette.length > 0 ? { color_palette } : {}),
     });
     return NextResponse.json(theme);
   } catch (err) {
