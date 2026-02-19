@@ -1,24 +1,44 @@
 import { NextResponse } from "next/server";
 import { useDatabase } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Diagnostic: where themes are saved and read from.
- * GET /api/storage-mode — no secrets, only whether DB is used and which env vars are set.
+ * GET /api/storage-mode — no secrets; returns lengths so you can see if vars are present at runtime.
  */
 export async function GET() {
-  const databaseUrlSet = Boolean(process.env.DATABASE_URL?.trim());
-  const databasePrivateUrlSet = Boolean(process.env.DATABASE_PRIVATE_URL?.trim());
-  const databasePublicUrlSet = Boolean(process.env.DATABASE_PUBLIC_URL?.trim());
+  // Read at runtime (bracket notation to avoid any build-time inlining)
+  const env = (key: string) => (process.env[key] ?? "").trim();
+  const len = (key: string) => env(key).length;
+
+  const vars = {
+    DATABASE_URL: len("DATABASE_URL"),
+    DATABASE_PRIVATE_URL: len("DATABASE_PRIVATE_URL"),
+    DATABASE_PUBLIC_URL: len("DATABASE_PUBLIC_URL"),
+    POSTGRES_URL: len("POSTGRES_URL"),
+    POSTGRES_PRIVATE_URL: len("POSTGRES_PRIVATE_URL"),
+  };
   const useDb = useDatabase();
+
+  const anySet = Object.values(vars).some((n) => n > 0);
+  let note = "";
+  if (!useDb && !anySet) {
+    note =
+      "No DB env vars are set at runtime. On Railway: open your app service → Variables → ensure a variable is set (e.g. DATABASE_URL) and its value is a Reference to the Postgres service (e.g. ${{Postgres.DATABASE_URL}}). Service name must match exactly. Then redeploy.";
+  } else if (!useDb && anySet) {
+    note =
+      "DB vars have length > 0 but app is still using file. Check that the variable name is one we support: DATABASE_URL, DATABASE_PRIVATE_URL, DATABASE_PUBLIC_URL, POSTGRES_URL, POSTGRES_PRIVATE_URL.";
+  } else {
+    note = "Using PostgreSQL for theme storage.";
+  }
 
   return NextResponse.json({
     mode: useDb ? "database" : "file",
     message: useDb
       ? "Themes are saved to and read from PostgreSQL."
-      : "Themes are saved to and read from data/themes.json (file). Set DATABASE_URL, DATABASE_PRIVATE_URL, or DATABASE_PUBLIC_URL to use Postgres.",
-    databaseUrlSet,
-    databasePrivateUrlSet,
-    databasePublicUrlSet,
-    note: "If mode is 'file' on Railway, add a variable from your Postgres service: Variables → New variable → e.g. DATABASE_URL = ${{Postgres.DATABASE_URL}} (or DATABASE_PRIVATE_URL / DATABASE_PUBLIC_URL depending on what your Postgres service exposes).",
+      : "Themes are saved to and read from data/themes.json (file).",
+    envVarLengths: vars,
+    note,
   });
 }

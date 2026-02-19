@@ -8,13 +8,20 @@ import type { ThemeRecord } from "./types";
 let pool: Pool | null = null;
 let schemaInited = false;
 
+// Read with bracket notation so env is read at runtime (not inlined at build)
+function getEnv(key: string): string {
+  return (process.env[key] ?? "").trim();
+}
+
 function getConnectionString(): string {
   const url =
-    process.env.DATABASE_URL?.trim() ||
-    process.env.DATABASE_PRIVATE_URL?.trim() ||
-    process.env.DATABASE_PUBLIC_URL?.trim() ||
+    getEnv("DATABASE_URL") ||
+    getEnv("DATABASE_PRIVATE_URL") ||
+    getEnv("DATABASE_PUBLIC_URL") ||
+    getEnv("POSTGRES_URL") ||
+    getEnv("POSTGRES_PRIVATE_URL") ||
     "";
-  if (!url) throw new Error("DATABASE_URL, DATABASE_PRIVATE_URL, or DATABASE_PUBLIC_URL is required for database mode");
+  if (!url) throw new Error("One of DATABASE_URL, DATABASE_PRIVATE_URL, DATABASE_PUBLIC_URL, POSTGRES_URL, POSTGRES_PRIVATE_URL is required for database mode");
   return url;
 }
 
@@ -143,8 +150,10 @@ function generateId(): string {
 
 export function useDatabase(): boolean {
   return Boolean(
-    process.env.DATABASE_URL?.trim() ||
-      process.env.DATABASE_PRIVATE_URL?.trim() ||
-      process.env.DATABASE_PUBLIC_URL?.trim()
+    getEnv("DATABASE_URL") ||
+      getEnv("DATABASE_PRIVATE_URL") ||
+      getEnv("DATABASE_PUBLIC_URL") ||
+      getEnv("POSTGRES_URL") ||
+      getEnv("POSTGRES_PRIVATE_URL")
   );
 }
