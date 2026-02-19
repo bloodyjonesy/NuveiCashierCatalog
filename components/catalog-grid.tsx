@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2, Camera } from "lucide-react";
+import { ExternalLink, Trash2, Camera, Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useAdmin } from "@/contexts/admin-context";
 import type { ThemeRecord } from "@/lib/types";
 
@@ -16,6 +17,8 @@ export function CatalogGrid() {
   const [loading, setLoading] = useState(true);
   const [retakingId, setRetakingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   const loadThemes = () => {
     fetch("/api/themes")
@@ -56,6 +59,39 @@ export function CatalogGrid() {
       }
     } finally {
       setRetakingId(null);
+    }
+  };
+
+  const startRename = (e: React.MouseEvent, theme: ThemeRecord) => {
+    e.preventDefault();
+    setRenamingId(theme.id);
+    setRenameValue(theme.name);
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
+  const saveRename = async (id: string) => {
+    const name = renameValue.trim();
+    if (!name) {
+      cancelRename();
+      return;
+    }
+    try {
+      const res = await fetch(`/api/themes/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setThemes((prev) => prev.map((t) => (t.id === id ? updated : t)));
+        router.refresh();
+      }
+    } finally {
+      cancelRename();
     }
   };
 
@@ -117,8 +153,40 @@ export function CatalogGrid() {
               </div>
             </div>
             <CardContent className="p-4">
-              <h3 className="font-semibold truncate">{theme.name}</h3>
-              <p className="text-sm text-muted-foreground">Theme ID: {theme.theme_id}</p>
+              {isAdmin && renamingId === theme.id ? (
+                <div
+                  className="space-y-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <Input
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveRename(theme.id);
+                      if (e.key === "Escape") cancelRename();
+                    }}
+                    placeholder="Theme name"
+                    className="font-semibold h-9"
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => saveRename(theme.id)}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={cancelRename}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-semibold truncate">{theme.name}</h3>
+                  <p className="text-sm text-muted-foreground">Theme ID: {theme.theme_id}</p>
+                </>
+              )}
             </CardContent>
           </Link>
           <CardFooter className="p-4 pt-0 flex flex-wrap gap-2">
@@ -128,8 +196,17 @@ export function CatalogGrid() {
                 View & test
               </Button>
             </Link>
-            {isAdmin && (
+            {isAdmin && renamingId !== theme.id && (
               <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  title="Rename theme"
+                  disabled={renamingId !== null}
+                  onClick={(e) => startRename(e, theme)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
