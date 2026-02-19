@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CredentialsProvider } from "@/components/credentials-provider";
 import { useAdmin } from "@/contexts/admin-context";
-import { LayoutDashboard, PlusCircle, ExternalLink } from "lucide-react";
+import { useTheme } from "@/contexts/theme-context";
+import { LayoutDashboard, PlusCircle, ExternalLink, Sun, Moon } from "lucide-react";
 
 const navCatalog = { href: "/", label: "Catalog", icon: LayoutDashboard };
 const navAdmin = [
@@ -16,9 +17,10 @@ const navAdmin = [
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isAdmin } = useAdmin();
+  const { theme, setTheme } = useTheme();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto flex h-14 items-center px-4">
           <Link href="/" className="font-semibold text-lg mr-6">
@@ -49,7 +51,21 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 </Link>
               ))}
           </nav>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
             <CredentialsProvider />
           </div>
         </div>
