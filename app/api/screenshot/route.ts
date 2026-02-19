@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
   if (typeof body.url === "string" && body.url.startsWith("https://secure.nuvei.com/")) {
     url = body.url;
   } else if (body.useDemo === true && typeof body.theme_id === "string") {
-    const merchantId = process.env.NUVEI_MERCHANT_ID;
-    const merchantSiteId = process.env.NUVEI_MERCHANT_SITE_ID;
-    const secretKey = process.env.NUVEI_SECRET_KEY;
+    const merchantId = (process.env.NUVEI_MERCHANT_ID ?? "").trim().replace(/\r?\n/g, "");
+    const merchantSiteId = (process.env.NUVEI_MERCHANT_SITE_ID ?? "").trim().replace(/\r?\n/g, "");
+    const secretKey = (process.env.NUVEI_SECRET_KEY ?? "").trim().replace(/\r?\n/g, "");
     if (!merchantId || !merchantSiteId || !secretKey) {
       return NextResponse.json(
         { error: "Demo credentials not configured" },
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         merchant_id: merchantId,
         merchant_site_id: merchantSiteId,
         user_token_id: "demo@nuvei.local",
-        theme_id: body.theme_id,
+        theme_id: body.theme_id.trim(),
       }),
       secretKey
     );

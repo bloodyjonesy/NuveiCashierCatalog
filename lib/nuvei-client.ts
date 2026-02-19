@@ -31,7 +31,8 @@ export async function buildHostedUrlClient(
   secretKey: string
 ): Promise<string> {
   const full = buildNuveiParams(params);
-  const toHash = secretKey + concatValuesForChecksum(full);
+  const secret = String(secretKey).trim().replace(/\r?\n/g, "");
+  const toHash = secret + concatValuesForChecksum(full);
   const checksum = await sha256Hex(toHash);
   const qs =
     [

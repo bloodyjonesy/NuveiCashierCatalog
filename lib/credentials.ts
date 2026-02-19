@@ -27,6 +27,10 @@ export function setUseDemo(useDemo: boolean): void {
   } catch {}
 }
 
+function clean(s: string): string {
+  return s.trim().replace(/\r?\n/g, "");
+}
+
 export function getStoredCredentials(): StoredCredentials {
   if (typeof window === "undefined") {
     return { merchant_id: "", merchant_site_id: "", merchantSecretKey: "" };
@@ -36,9 +40,9 @@ export function getStoredCredentials(): StoredCredentials {
     if (!raw) return { merchant_id: "", merchant_site_id: "", merchantSecretKey: "" };
     const parsed = JSON.parse(raw) as StoredCredentials;
     return {
-      merchant_id: typeof parsed.merchant_id === "string" ? parsed.merchant_id : "",
-      merchant_site_id: typeof parsed.merchant_site_id === "string" ? parsed.merchant_site_id : "",
-      merchantSecretKey: typeof parsed.merchantSecretKey === "string" ? parsed.merchantSecretKey : "",
+      merchant_id: clean(typeof parsed.merchant_id === "string" ? parsed.merchant_id : ""),
+      merchant_site_id: clean(typeof parsed.merchant_site_id === "string" ? parsed.merchant_site_id : ""),
+      merchantSecretKey: clean(typeof parsed.merchantSecretKey === "string" ? parsed.merchantSecretKey : ""),
     };
   } catch {
     return { merchant_id: "", merchant_site_id: "", merchantSecretKey: "" };
@@ -48,6 +52,13 @@ export function getStoredCredentials(): StoredCredentials {
 export function setStoredCredentials(creds: StoredCredentials): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(CREDS_KEY, JSON.stringify(creds));
+    localStorage.setItem(
+      CREDS_KEY,
+      JSON.stringify({
+        merchant_id: clean(creds.merchant_id),
+        merchant_site_id: clean(creds.merchant_site_id),
+        merchantSecretKey: clean(creds.merchantSecretKey),
+      })
+    );
   } catch {}
 }

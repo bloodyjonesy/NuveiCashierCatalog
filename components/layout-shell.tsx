@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CredentialsProvider } from "@/components/credentials-provider";
-import { LayoutDashboard, PlusCircle } from "lucide-react";
+import { LayoutDashboard, PlusCircle, ExternalLink } from "lucide-react";
 
 const nav = [
   { href: "/", label: "Catalog", icon: LayoutDashboard },
   { href: "/add", label: "Add theme", icon: PlusCircle },
+  { href: "/test", label: "Test link", icon: ExternalLink },
 ];
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {

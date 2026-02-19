@@ -12,9 +12,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const merchantId = process.env.NUVEI_MERCHANT_ID;
-  const merchantSiteId = process.env.NUVEI_MERCHANT_SITE_ID;
-  const secretKey = process.env.NUVEI_SECRET_KEY;
+  // Trim and strip newlines (Railway/env often adds trailing newlines when pasting)
+  const merchantId = (process.env.NUVEI_MERCHANT_ID ?? "").trim().replace(/\r?\n/g, "");
+  const merchantSiteId = (process.env.NUVEI_MERCHANT_SITE_ID ?? "").trim().replace(/\r?\n/g, "");
+  const secretKey = (process.env.NUVEI_SECRET_KEY ?? "").trim().replace(/\r?\n/g, "");
 
   if (!merchantId || !merchantSiteId || !secretKey) {
     return NextResponse.json(

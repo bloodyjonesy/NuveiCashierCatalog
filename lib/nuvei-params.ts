@@ -48,10 +48,17 @@ function toNuveiTimestamp(d: Date = new Date()): string {
   return `${y}-${m}-${day}.${h}:${min}:${s}`;
 }
 
-/** Build params with defaults; theme_id optional. */
+/** Trim string and strip newlines (avoids "invalid merchant id" from env/form paste). */
+function cleanParam(value: unknown): string {
+  if (value === undefined || value === null) return "";
+  const s = String(value).trim().replace(/\r?\n/g, "");
+  return s;
+}
+
+/** Build params with defaults; theme_id optional. All string params are cleaned. */
 export function buildNuveiParams(overrides: Partial<NuveiHostedParams> & { theme_id?: string }): NuveiHostedParams {
   const now = toNuveiTimestamp();
-  return {
+  const base = {
     merchant_id: "",
     merchant_site_id: "",
     total_amount: "1.00",
@@ -67,7 +74,21 @@ export function buildNuveiParams(overrides: Partial<NuveiHostedParams> & { theme
       : process.env.NEXT_PUBLIC_APP_URL
         ? `${process.env.NEXT_PUBLIC_APP_URL}/api/notify`
         : "https://example.com/api/notify",
-    ...overrides,
+  };
+  const merged = { ...base, ...overrides };
+  return {
+    merchant_id: cleanParam(merged.merchant_id),
+    merchant_site_id: cleanParam(merged.merchant_site_id),
+    total_amount: cleanParam(merged.total_amount) || "1.00",
+    currency: cleanParam(merged.currency) || "USD",
+    user_token_id: cleanParam(merged.user_token_id) || "demo@nuvei.local",
+    item_name_1: cleanParam(merged.item_name_1) || "Test item",
+    item_amount_1: cleanParam(merged.item_amount_1) || "1.00",
+    item_quantity_1: cleanParam(merged.item_quantity_1) || "1",
+    time_stamp: merged.time_stamp ? cleanParam(merged.time_stamp) : now,
+    version: cleanParam(merged.version) || "4.0.0",
+    notify_url: cleanParam(merged.notify_url) || base.notify_url,
+    ...(merged.theme_id ? { theme_id: cleanParam(merged.theme_id) } : {}),
   };
 }
 
