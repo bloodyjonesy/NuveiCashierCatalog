@@ -1,14 +1,14 @@
-# Node 20 + Playwright with system deps (libglib etc.) so screenshot API works
+# Node 20 + Playwright with system deps (libglib etc.) so screenshot API works on Railway
 FROM node:20-bookworm AS base
 
 WORKDIR /app
 
-# Install Playwright Chromium and all system dependencies (fixes libglib-2.0.so.0 missing)
-RUN npx -y playwright@1.40.0 install chromium --with-deps
-
-# App dependencies
+# App dependencies first (so we use the same Playwright version as at runtime)
 COPY package.json package-lock.json* ./
 RUN npm ci
+
+# Install Chromium + system deps using the project's Playwright (version must match node_modules)
+RUN npx playwright install chromium --with-deps
 
 # Build
 COPY . .
