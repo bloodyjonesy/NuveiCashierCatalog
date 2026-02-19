@@ -7,7 +7,9 @@ import {
   buildNuveiParams,
   concatValuesForChecksum,
   getBaseUrl,
+  appendThemeType,
   type NuveiHostedParams,
+  type ThemeType,
 } from "./nuvei-params";
 
 /** Compute SHA-256 hex in the browser. */
@@ -28,7 +30,8 @@ export async function buildHostedUrlClient(
     user_token_id: string;
     theme_id?: string;
   },
-  secretKey: string
+  secretKey: string,
+  themeType: ThemeType = "DESKTOP"
 ): Promise<string> {
   const full = buildNuveiParams(params);
   const secret = String(secretKey).trim().replace(/\r?\n/g, "");
@@ -55,5 +58,6 @@ export async function buildHostedUrlClient(
       })
       .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent((full as Record<string, string>)[k])}`)
       .join("&") + `&checksum=${encodeURIComponent(checksum)}`;
-  return `${getBaseUrl()}?${qs}`;
+  const url = `${getBaseUrl()}?${qs}`;
+  return appendThemeType(url, themeType);
 }

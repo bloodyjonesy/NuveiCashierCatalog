@@ -10,11 +10,13 @@ import {
   getStoredCredentials,
 } from "@/lib/credentials";
 import { buildHostedUrlClient } from "@/lib/nuvei-client";
+import { appendThemeType } from "@/lib/nuvei-params";
 import type { ThemeRecord, CustomerRecord } from "@/lib/types";
 
 export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   const [useDemo] = useState(getUseDemo());
   const creds = getStoredCredentials();
+  const [themeType, setThemeType] = useState<"DESKTOP" | "SMARTPHONE">("DESKTOP");
   const [customerMode, setCustomerMode] = useState<"new" | "returning">("new");
   const [newUserTokenId, setNewUserTokenId] = useState("newuser@test.com");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -55,6 +57,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             useDemo: true,
             theme_id: theme.theme_id,
             user_token_id,
+            themeType,
           }),
         });
         const data = await res.json();
@@ -73,7 +76,8 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             user_token_id,
             theme_id: theme.theme_id,
           },
-          creds.merchantSecretKey
+          creds.merchantSecretKey,
+          themeType
         );
         setIframeUrl(url);
       }
@@ -82,7 +86,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
     } finally {
       setLoading(false);
     }
-  }, [useDemo, theme.theme_id, creds, customerMode, newUserTokenId, selectedCustomerId, customers]);
+  }, [useDemo, theme.theme_id, themeType, creds, customerMode, newUserTokenId, selectedCustomerId, customers]);
 
   const handleSaveAsCustomer = async () => {
     const label = saveCustomerLabel.trim();
@@ -156,6 +160,32 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
               </select>
             </div>
           )}
+          <div className="flex gap-2 items-center">
+            <Label>Layout</Label>
+            <Button
+              type="button"
+              variant={themeType === "DESKTOP" ? "default" : "secondary"}
+              size="sm"
+              onClick={() => {
+                setThemeType("DESKTOP");
+                if (iframeUrl) setIframeUrl(appendThemeType(iframeUrl, "DESKTOP"));
+              }}
+            >
+              Desktop
+            </Button>
+            <Button
+              type="button"
+              variant={themeType === "SMARTPHONE" ? "default" : "secondary"}
+              size="sm"
+              onClick={() => {
+                setThemeType("SMARTPHONE");
+                if (iframeUrl) setIframeUrl(appendThemeType(iframeUrl, "SMARTPHONE"));
+              }}
+            >
+              Mobile
+            </Button>
+          </div>
+
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button onClick={loadPaymentPage} disabled={loading}>
             {loading ? "Loading…" : "Open payment page"}
@@ -188,16 +218,16 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
         </CardHeader>
         <CardContent>
           {iframeUrl ? (
-            <div className="aspect-video w-full overflow-hidden rounded-md border bg-muted min-h-[500px]">
+            <div className="w-full overflow-hidden rounded-md border bg-muted min-h-[720px] h-[75vh]">
               <iframe
                 src={iframeUrl}
                 title="Nuvei payment page"
-                className="w-full h-full min-h-[500px] border-0"
+                className="w-full h-full min-h-[720px] border-0"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
               />
             </div>
           ) : (
-            <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm min-h-[300px]">
+            <div className="w-full min-h-[400px] rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm">
               Click &quot;Open payment page&quot; to load the hosted page
             </div>
           )}

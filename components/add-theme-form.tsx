@@ -13,6 +13,7 @@ import {
   setStoredCredentials,
 } from "@/lib/credentials";
 import { buildHostedUrlClient } from "@/lib/nuvei-client";
+import { appendThemeType } from "@/lib/nuvei-params";
 
 export function AddThemeForm() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function AddThemeForm() {
   const [merchantId, setMerchantId] = useState(getStoredCredentials().merchant_id);
   const [siteId, setSiteId] = useState(getStoredCredentials().merchant_site_id);
   const [secretKey, setSecretKey] = useState(getStoredCredentials().merchantSecretKey);
+  const [themeType, setThemeType] = useState<"DESKTOP" | "SMARTPHONE">("DESKTOP");
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -55,6 +57,7 @@ export function AddThemeForm() {
           body: JSON.stringify({
             useDemo: true,
             theme_id: themeId.trim(),
+            themeType,
           }),
         });
         const data = await res.json();
@@ -73,7 +76,8 @@ export function AddThemeForm() {
             user_token_id: "demo@nuvei.local",
             theme_id: themeId.trim(),
           },
-          secretKey
+          secretKey,
+          themeType
         );
         setIframeUrl(url);
       }
@@ -82,7 +86,7 @@ export function AddThemeForm() {
     } finally {
       setLoading(false);
     }
-  }, [useDemo, themeId, merchantId, siteId, secretKey]);
+  }, [useDemo, themeId, themeType, merchantId, siteId, secretKey]);
 
   const handleSave = async () => {
     setError(null);
@@ -99,7 +103,7 @@ export function AddThemeForm() {
       const screenshotRes = await fetch("/api/screenshot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: iframeUrl }),
+        body: JSON.stringify({ url: iframeUrl, themeType }),
       });
       const screenshotData = await screenshotRes.json();
       if (!screenshotRes.ok) throw new Error(screenshotData.error || "Screenshot failed");
@@ -204,6 +208,34 @@ export function AddThemeForm() {
             <p className="text-sm text-destructive">{error}</p>
           )}
 
+          <div className="space-y-2">
+            <Label>Layout</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={themeType === "DESKTOP" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => {
+                  setThemeType("DESKTOP");
+                  if (iframeUrl) setIframeUrl(appendThemeType(iframeUrl, "DESKTOP"));
+                }}
+              >
+                Desktop
+              </Button>
+              <Button
+                type="button"
+                variant={themeType === "SMARTPHONE" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => {
+                  setThemeType("SMARTPHONE");
+                  if (iframeUrl) setIframeUrl(appendThemeType(iframeUrl, "SMARTPHONE"));
+                }}
+              >
+                Mobile
+              </Button>
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <Button onClick={loadPreview} disabled={loading}>
               {loading ? "Loading…" : "Load preview"}
@@ -225,22 +257,22 @@ export function AddThemeForm() {
           <h2 className="text-lg font-medium">Preview</h2>
           {iframeUrl && (
             <p className="text-sm text-muted-foreground">
-              If the page looks correct, click Save below.
+              If the page looks correct, click Save below. Switch Desktop/Mobile and reload to preview the other layout.
             </p>
           )}
         </CardHeader>
         <CardContent>
           {iframeUrl ? (
-            <div className="aspect-video w-full overflow-hidden rounded-md border bg-muted">
+            <div className="w-full overflow-hidden rounded-md border bg-muted min-h-[720px] h-[75vh]">
               <iframe
                 src={iframeUrl}
                 title="Nuvei hosted page preview"
-                className="w-full h-full min-h-[400px] border-0"
+                className="w-full h-full min-h-[720px] border-0"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
               />
             </div>
           ) : (
-            <div className="aspect-video w-full rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm">
+            <div className="w-full min-h-[400px] rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm">
               Click &quot;Load preview&quot; to see the hosted page
             </div>
           )}
