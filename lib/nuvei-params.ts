@@ -134,19 +134,14 @@ function toQueryString(params: NuveiHostedParams): string {
   return entries.join("&");
 }
 
-/** Options appended after checksum (not included in checksum). */
-export type NuveiUrlOptions = { showMessageKeys?: boolean };
-
 /** Backend: build full hosted page URL with checksum (uses secret from env). */
 export function buildHostedUrlNode(
   params: Partial<NuveiHostedParams> & { merchant_id: string; merchant_site_id: string },
-  secretKey: string,
-  options?: NuveiUrlOptions
+  secretKey: string
 ): string {
   const full = buildNuveiParams(params);
   const checksum = computeChecksumNode(secretKey, full);
-  let qs = toQueryString(full) + "&checksum=" + encodeURIComponent(checksum);
-  if (options?.showMessageKeys) qs += "&showMessageKeys=True";
+  const qs = toQueryString(full) + "&checksum=" + encodeURIComponent(checksum);
   return `${getBaseUrl()}?${qs}`;
 }
 

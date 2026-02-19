@@ -36,11 +36,11 @@ export async function POST(
 
   try {
     const { base64, publicPath } = await captureScreenshot(url);
-    const color_palette = base64 ? await extractPaletteFromBase64(base64) : undefined;
+    const color_palette = base64 ? await extractPaletteFromBase64(base64) : [];
     const updated = await updateTheme(id, {
       screenshot_base64: base64,
       screenshot_path: publicPath ?? null,
-      ...(color_palette?.length ? { color_palette } : {}),
+      color_palette: color_palette.length > 0 ? color_palette : null,
     });
     if (!updated) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

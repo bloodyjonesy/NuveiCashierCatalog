@@ -9,13 +9,17 @@ function rgbToHex(r: number, g: number, b: number): string {
 
 export async function extractPaletteFromBase64(base64Image: string): Promise<string[]> {
   if (!base64Image?.trim()) return [];
+  const normalized = base64Image.replace(/^data:image\/\w+;base64,/, "").trim();
+  if (!normalized) return [];
   try {
-    const ColorThief = require("colorthief");
-    const buffer = Buffer.from(base64Image.replace(/^data:image\/\w+;base64,/, ""), "base64");
-    const palette: [number, number, number][] = await ColorThief.getPalette(buffer, COLOR_COUNT);
+    const { getPalette } = await import("colorthief");
+    const buffer = Buffer.from(normalized, "base64");
+    if (buffer.length === 0) return [];
+    const palette = await getPalette(buffer, COLOR_COUNT);
     if (!Array.isArray(palette)) return [];
-    return palette.map(([r, g, b]) => rgbToHex(r, g, b));
-  } catch {
+    return palette.map(([r, g, b]: number[]) => rgbToHex(r, g, b));
+  } catch (err) {
+    console.error("[color-palette] extractPaletteFromBase64 failed:", err);
     return [];
   }
 }
