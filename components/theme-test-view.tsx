@@ -28,6 +28,9 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   type PreDepositMode = "always_accept" | "decline_with_message" | "decline_without_message";
   const [preDepositMode, setPreDepositMode] = useState<PreDepositMode>("always_accept");
   const [preDepositMessage, setPreDepositMessage] = useState("Your attempt has been declined.");
+  const [totalAmount, setTotalAmount] = useState("1.00");
+  const [currency, setCurrency] = useState("USD");
+  const [itemName, setItemName] = useState("Test item");
 
   useEffect(() => {
     fetch("/api/pre-deposit-config")
@@ -96,6 +99,9 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             useDemo: true,
             theme_id: theme.theme_id,
             user_token_id,
+            total_amount: totalAmount.trim() || "1.00",
+            currency: currency.trim() || "USD",
+            item_name_1: itemName.trim() || "Test item",
           }),
         });
         const data = await res.json();
@@ -107,12 +113,17 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
           setLoading(false);
           return;
         }
+        const amount = totalAmount.trim() || "1.00";
         const url = await buildHostedUrlClient(
           {
             merchant_id: creds.merchant_id,
             merchant_site_id: creds.merchant_site_id,
             user_token_id,
             theme_id: theme.theme_id,
+            total_amount: amount,
+            currency: currency.trim() || "USD",
+            item_name_1: itemName.trim() || "Test item",
+            item_amount_1: amount,
           },
           creds.merchantSecretKey
         );
@@ -123,7 +134,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
     } finally {
       setLoading(false);
     }
-  }, [useDemo, theme.theme_id, creds, customerMode, newUserTokenId, selectedCustomerId, customers]);
+  }, [useDemo, theme.theme_id, creds, customerMode, newUserTokenId, selectedCustomerId, customers, totalAmount, currency, itemName]);
 
   const handleSaveAsCustomer = async () => {
     const label = saveCustomerLabel.trim();
@@ -204,6 +215,39 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
                 </select>
               </div>
             )}
+            <div className="space-y-2 min-w-[100px]">
+              <Label htmlFor="total_amount" className="text-xs">Amount</Label>
+              <Input
+                id="total_amount"
+                type="text"
+                value={totalAmount}
+                onChange={(e) => setTotalAmount(e.target.value)}
+                placeholder="1.00"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-2 min-w-[80px]">
+              <Label htmlFor="currency" className="text-xs">Currency</Label>
+              <Input
+                id="currency"
+                type="text"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                placeholder="USD"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-2 min-w-[140px]">
+              <Label htmlFor="item_name" className="text-xs">Item name</Label>
+              <Input
+                id="item_name"
+                type="text"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                placeholder="Test item"
+                className="h-9"
+              />
+            </div>
             <Button onClick={loadPaymentPage} disabled={loading} className="shrink-0">
               {loading ? "Loading…" : "Open payment page"}
             </Button>
@@ -293,7 +337,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
                 {dmns.map((dmn, i) => (
                   <div key={i} className="rounded border bg-muted/50 p-3 text-xs font-mono">
                     <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      {["ppp_status", "Status", "totalAmount", "currency", "message", "PPP_TransactionId", "productId", "_receivedAt", "_source"].map(
+                      {["ppp_status", "Status", "totalAmount", "currency", "message", "PPP_TransactionId", "productId", "_receivedAt", "_source", "_responseToNuvei"].map(
                         (k) =>
                           (dmn as Record<string, unknown>)[k] != null &&
                           (dmn as Record<string, unknown>)[k] !== "" && (

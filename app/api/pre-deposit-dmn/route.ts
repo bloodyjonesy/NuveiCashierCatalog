@@ -18,28 +18,35 @@ export async function POST(request: NextRequest) {
       const params = new URLSearchParams(text);
       data = Object.fromEntries(params.entries());
     }
-    addDmn({ ...data, _source: "pre_deposit" });
   } catch {
     // continue
   }
 
   const { mode, declineMessage } = getPreDepositConfig();
 
+  let responseBody: string;
   if (mode === "always_accept") {
-    return new NextResponse("action=APPROVE", {
+    responseBody = "action=APPROVE";
+  } else if (mode === "decline_with_message" && declineMessage) {
+    responseBody = `action=DECLINE&message=${declineMessage}`;
+  } else {
+    responseBody = "action=DECLINE";
+  }
+
+  addDmn({
+    ...data,
+    _source: "pre_deposit",
+    _responseToNuvei: responseBody,
+  });
+
+  if (mode === "always_accept") {
+    return new NextResponse(responseBody, {
       status: 200,
       headers: { "Content-Type": "text/plain" },
     });
   }
 
-  if (mode === "decline_with_message" && declineMessage) {
-    return new NextResponse(`action=DECLINE&message=${declineMessage}`, {
-      status: 200,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    });
-  }
-
-  return new NextResponse("action=DECLINE", {
+  return new NextResponse(responseBody, {
     status: 200,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   });

@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
   const total_amount =
     typeof body.total_amount === "string" ? body.total_amount : "1.00";
   const currency = typeof body.currency === "string" ? body.currency : "USD";
+  const item_name_1 =
+    typeof body.item_name_1 === "string" ? body.item_name_1 : "Test item";
 
   const url = buildHostedUrlNode(
     {
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
       user_token_id,
       theme_id,
       item_amount_1: total_amount,
+      item_name_1,
     },
     secretKey
   );
