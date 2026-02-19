@@ -111,6 +111,7 @@ export function AddThemeForm() {
           theme_id: themeId.trim(),
           name: name.trim(),
           screenshot_path: screenshotData.path ?? null,
+          screenshot_base64: screenshotData.base64 ?? null,
         }),
       });
       if (!themeRes.ok) {

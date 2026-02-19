@@ -70,6 +70,7 @@ export function createTheme(
     theme_id: input.theme_id,
     name: input.name,
     screenshot_path: input.screenshot_path ?? null,
+    screenshot_base64: input.screenshot_base64 ?? null,
   };
   themes.push(theme);
   writeThemes(themes);
@@ -78,7 +79,7 @@ export function createTheme(
 
 export function updateTheme(
   id: string,
-  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path">>
+  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64">>
 ): ThemeRecord | undefined {
   const themes = readThemes();
   const i = themes.findIndex((t) => t.id === id);

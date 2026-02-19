@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AdminProvider } from "@/contexts/admin-context";
 import { LayoutShell } from "@/components/layout-shell";
 
 export const metadata: Metadata = {
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <LayoutShell>{children}</LayoutShell>
+        <AdminProvider>
+          <LayoutShell>{children}</LayoutShell>
+        </AdminProvider>
       </body>
     </html>
   );

@@ -4,16 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CredentialsProvider } from "@/components/credentials-provider";
+import { useAdmin } from "@/contexts/admin-context";
 import { LayoutDashboard, PlusCircle, ExternalLink } from "lucide-react";
 
-const nav = [
-  { href: "/", label: "Catalog", icon: LayoutDashboard },
+const navCatalog = { href: "/", label: "Catalog", icon: LayoutDashboard };
+const navAdmin = [
   { href: "/add", label: "Add theme", icon: PlusCircle },
   { href: "/test", label: "Test link", icon: ExternalLink },
 ];
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isAdmin } = useAdmin();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -23,18 +25,29 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             Nuvei Cashier Catalog
           </Link>
           <nav className="flex items-center gap-1">
-            {nav.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href}>
-                <Button
-                  variant={pathname === href ? "secondary" : "ghost"}
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Button>
-              </Link>
-            ))}
+            <Link href={navCatalog.href}>
+              <Button
+                variant={pathname === navCatalog.href ? "secondary" : "ghost"}
+                size="sm"
+                className="gap-2"
+              >
+                <navCatalog.icon className="h-4 w-4" />
+                {navCatalog.label}
+              </Button>
+            </Link>
+            {isAdmin &&
+              navAdmin.map(({ href, label, icon: Icon }) => (
+                <Link key={href} href={href}>
+                  <Button
+                    variant={pathname === href ? "secondary" : "ghost"}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Button>
+                </Link>
+              ))}
           </nav>
           <div className="ml-auto">
             <CredentialsProvider />

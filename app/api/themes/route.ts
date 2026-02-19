@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
   const name = typeof body.name === "string" ? body.name : "";
   const screenshot_path =
     typeof body.screenshot_path === "string" ? body.screenshot_path : null;
+  const screenshot_base64 =
+    typeof body.screenshot_base64 === "string" ? body.screenshot_base64 : null;
 
   if (!theme_id.trim() || !name.trim()) {
     return NextResponse.json(
@@ -20,6 +22,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const theme = createTheme({ theme_id: theme_id.trim(), name: name.trim(), screenshot_path });
+  const theme = createTheme({
+    theme_id: theme_id.trim(),
+    name: name.trim(),
+    screenshot_path,
+    screenshot_base64,
+  });
   return NextResponse.json(theme);
 }

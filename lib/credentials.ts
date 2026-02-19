@@ -62,3 +62,28 @@ export function setStoredCredentials(creds: StoredCredentials): void {
     );
   } catch {}
 }
+
+/** Admin mode: stored in localStorage; gate for Add theme, Delete, Retake screenshot. */
+export const ADMIN_KEY = "nuvei_catalog_admin";
+const ADMIN_PASSWORD = "kylesthemepage";
+
+export function getAdminMode(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(ADMIN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function setAdminMode(isAdmin: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (isAdmin) localStorage.setItem(ADMIN_KEY, "true");
+    else localStorage.removeItem(ADMIN_KEY);
+  } catch {}
+}
+
+export function checkAdminPassword(password: string): boolean {
+  return password.trim() === ADMIN_PASSWORD;
+}

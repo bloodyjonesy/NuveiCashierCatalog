@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
 import { buildHostedUrlNode, buildNuveiParams } from "@/lib/nuvei-params";
-
-const THEMES_DIR = path.join(process.cwd(), "public", "themes");
-
-function ensureThemesDir() {
-  if (!fs.existsSync(THEMES_DIR)) {
-    fs.mkdirSync(THEMES_DIR, { recursive: true });
-  }
-}
-
-function safeFilename(): string {
-  return `screenshot-${Date.now()}-${Math.random().toString(36).slice(2, 10)}.png`;
-}
+import { captureScreenshot } from "@/lib/capture-screenshot";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
@@ -53,27 +40,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const viewport = { width: 1600, height: 1000 };
-
   try {
-    const { chromium } = await import("playwright");
-    const browser = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setViewportSize(viewport);
-    await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
-    await page.waitForTimeout(2000);
-
-    ensureThemesDir();
-    const filename = safeFilename();
-    const filePath = path.join(THEMES_DIR, filename);
-    await page.screenshot({ path: filePath, fullPage: false });
-    await browser.close();
-
-    const publicPath = `/themes/${filename}`;
-    return NextResponse.json({ path: publicPath });
+    const { base64, publicPath } = await captureScreenshot(url);
+    return NextResponse.json({ path: publicPath ?? null, base64 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Screenshot failed:", err);

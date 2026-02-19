@@ -9,15 +9,20 @@ import {
   setUseDemo,
   getStoredCredentials,
   setStoredCredentials,
+  checkAdminPassword,
 } from "@/lib/credentials";
+import { useAdmin } from "@/contexts/admin-context";
 import { Settings } from "lucide-react";
 
 export function CredentialsProvider() {
+  const { isAdmin, setAdmin } = useAdmin();
   const [open, setOpen] = useState(false);
   const [useDemo, setUseDemoState] = useState(true);
   const [merchantId, setMerchantId] = useState("");
   const [siteId, setSiteId] = useState("");
   const [secretKey, setSecretKey] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
 
   useEffect(() => {
     setUseDemoState(getUseDemo());
@@ -100,7 +105,55 @@ export function CredentialsProvider() {
             <p className="text-xs text-muted-foreground mb-3">
               Stored in this browser only. Demo keys are server-side.
             </p>
-            <div className="flex gap-2">
+            <div className="border-t pt-3 mt-3 space-y-2">
+              <p className="text-sm font-medium">Admin mode</p>
+              {isAdmin ? (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    setAdmin(false);
+                    setAdminPassword("");
+                    setAdminError("");
+                  }}
+                >
+                  Exit admin
+                </Button>
+              ) : (
+                <>
+                  <Label htmlFor="admin_pw" className="sr-only">Password</Label>
+                  <Input
+                    id="admin_pw"
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => {
+                      setAdminPassword(e.target.value);
+                      setAdminError("");
+                    }}
+                    placeholder="Admin password"
+                    className="mb-1"
+                  />
+                  {adminError && (
+                    <p className="text-xs text-destructive">{adminError}</p>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (checkAdminPassword(adminPassword)) {
+                        setAdmin(true);
+                        setAdminPassword("");
+                        setAdminError("");
+                      } else {
+                        setAdminError("Wrong password");
+                      }
+                    }}
+                  >
+                    Unlock admin
+                  </Button>
+                </>
+              )}
+            </div>
+            <div className="flex gap-2 mt-3">
               <Button size="sm" onClick={handleSave}>
                 Save
               </Button>
