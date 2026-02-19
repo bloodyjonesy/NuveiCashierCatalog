@@ -25,6 +25,33 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   const [saveCustomerLabel, setSaveCustomerLabel] = useState("");
   const [savingCustomer, setSavingCustomer] = useState(false);
   const [dmns, setDmns] = useState<Record<string, unknown>[]>([]);
+  type PreDepositMode = "always_accept" | "decline_with_message" | "decline_without_message";
+  const [preDepositMode, setPreDepositMode] = useState<PreDepositMode>("always_accept");
+  const [preDepositMessage, setPreDepositMessage] = useState("Your attempt has been declined.");
+
+  useEffect(() => {
+    fetch("/api/pre-deposit-config")
+      .then((r) => r.json())
+      .then((c) => {
+        setPreDepositMode((c.mode ?? "always_accept") as PreDepositMode);
+        setPreDepositMessage(c.declineMessage ?? "Your attempt has been declined.");
+      })
+      .catch(() => {});
+  }, []);
+
+  const savePreDepositConfig = useCallback(
+    (mode: PreDepositMode, message: string) => {
+      fetch("/api/pre-deposit-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          declineMessage: mode === "decline_with_message" ? message : undefined,
+        }),
+      }).catch(() => {});
+    },
+    []
+  );
 
   useEffect(() => {
     if (!iframeUrl) return;
@@ -180,7 +207,32 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             <Button onClick={loadPaymentPage} disabled={loading} className="shrink-0">
               {loading ? "Loading…" : "Open payment page"}
             </Button>
-            <div className="flex gap-2 items-end min-w-[200px] ml-auto">
+            <div className="flex flex-wrap items-end gap-4 ml-auto">
+              <div className="space-y-2 min-w-[200px]">
+                <Label className="text-xs">Pre-deposit DMN response</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                  value={preDepositMode}
+                  onChange={(e) => {
+                    const m = e.target.value as PreDepositMode;
+                    setPreDepositMode(m);
+                    savePreDepositConfig(m, preDepositMessage);
+                  }}
+                >
+                  <option value="always_accept">Always accept</option>
+                  <option value="decline_with_message">Decline with message</option>
+                  <option value="decline_without_message">Decline without message</option>
+                </select>
+                {preDepositMode === "decline_with_message" && (
+                  <Input
+                    value={preDepositMessage}
+                    onChange={(e) => setPreDepositMessage(e.target.value)}
+                    onBlur={() => savePreDepositConfig(preDepositMode, preDepositMessage)}
+                    placeholder="Decline message"
+                    className="text-sm h-9"
+                  />
+                )}
+              </div>
               <div className="space-y-2 flex-1 min-w-0">
                 <Label htmlFor="save_customer_label">Save as demo customer</Label>
                 <Input

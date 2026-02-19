@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,6 @@ import {
 import { useAdmin } from "@/contexts/admin-context";
 import { Settings, Copy } from "lucide-react";
 
-type PreDepositMode = "always_accept" | "decline_with_message" | "decline_without_message";
-
 export function CredentialsProvider() {
   const { isAdmin, setAdmin } = useAdmin();
   const [open, setOpen] = useState(false);
@@ -25,19 +23,7 @@ export function CredentialsProvider() {
   const [secretKey, setSecretKey] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState("");
-  const [preDepositMode, setPreDepositModeState] = useState<PreDepositMode>("always_accept");
-  const [preDepositMessage, setPreDepositMessage] = useState("Your attempt has been declined.");
   const [copied, setCopied] = useState<string | null>(null);
-
-  const loadPreDepositConfig = useCallback(() => {
-    fetch("/api/pre-deposit-config")
-      .then((r) => r.json())
-      .then((c) => {
-        setPreDepositModeState(c.mode ?? "always_accept");
-        setPreDepositMessage(c.declineMessage ?? "Your attempt has been declined.");
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     setUseDemoState(getUseDemo());
@@ -45,8 +31,7 @@ export function CredentialsProvider() {
     setMerchantId(c.merchant_id);
     setSiteId(c.merchant_site_id);
     setSecretKey(c.merchantSecretKey);
-    loadPreDepositConfig();
-  }, [loadPreDepositConfig]);
+  }, []);
 
   const handleUseDemoChange = (checked: boolean) => {
     setUseDemoState(checked);
@@ -71,14 +56,6 @@ export function CredentialsProvider() {
       merchant_site_id: siteId,
       merchantSecretKey: secretKey,
     });
-    fetch("/api/pre-deposit-config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode: preDepositMode,
-        declineMessage: preDepositMode === "decline_with_message" ? preDepositMessage : undefined,
-      }),
-    }).catch(() => {});
     setOpen(false);
   };
 
@@ -173,26 +150,6 @@ export function CredentialsProvider() {
                 </div>
                 <p className="text-xs font-mono bg-muted px-2 py-1 rounded break-all">{preDepositDmnUrl || "—"}</p>
               </div>
-            </div>
-            <div className="border-t pt-3 mt-3 space-y-2 mb-3">
-              <p className="text-sm font-medium">Pre-deposit DMN response</p>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                value={preDepositMode}
-                onChange={(e) => setPreDepositModeState(e.target.value as PreDepositMode)}
-              >
-                <option value="always_accept">Always accept</option>
-                <option value="decline_with_message">Decline with message</option>
-                <option value="decline_without_message">Decline without message</option>
-              </select>
-              {preDepositMode === "decline_with_message" && (
-                <Input
-                  value={preDepositMessage}
-                  onChange={(e) => setPreDepositMessage(e.target.value)}
-                  placeholder="Decline message"
-                  className="text-sm"
-                />
-              )}
             </div>
             <p className="text-xs text-muted-foreground mb-3">
               Stored in this browser only. Demo keys are server-side.

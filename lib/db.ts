@@ -8,10 +8,18 @@ import type { ThemeRecord } from "./types";
 let pool: Pool | null = null;
 let schemaInited = false;
 
+function getConnectionString(): string {
+  const url =
+    process.env.DATABASE_URL?.trim() ||
+    process.env.DATABASE_PRIVATE_URL?.trim() ||
+    "";
+  if (!url) throw new Error("DATABASE_URL or DATABASE_PRIVATE_URL is required for database mode");
+  return url;
+}
+
 function getPool(): Pool {
   if (!pool) {
-    const url = process.env.DATABASE_URL;
-    if (!url?.trim()) throw new Error("DATABASE_URL is required for database mode");
+    const url = getConnectionString();
     pool = new Pool({
       connectionString: url,
       ssl: url.includes("localhost") ? false : { rejectUnauthorized: false },
@@ -133,5 +141,7 @@ function generateId(): string {
 }
 
 export function useDatabase(): boolean {
-  return Boolean(process.env.DATABASE_URL?.trim());
+  return Boolean(
+    process.env.DATABASE_URL?.trim() || process.env.DATABASE_PRIVATE_URL?.trim()
+  );
 }
