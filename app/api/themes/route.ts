@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllThemes, createTheme } from "@/lib/store";
 
 export async function GET() {
-  const themes = await getAllThemes();
-  return NextResponse.json(themes);
+  try {
+    const themes = await getAllThemes();
+    return NextResponse.json(themes);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[themes GET] getAllThemes failed:", message);
+    return NextResponse.json(
+      { error: "Failed to load themes", details: message },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -22,11 +31,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const theme = await createTheme({
-    theme_id: theme_id.trim(),
-    name: name.trim(),
-    screenshot_path,
-    screenshot_base64,
-  });
-  return NextResponse.json(theme);
+  try {
+    const theme = await createTheme({
+      theme_id: theme_id.trim(),
+      name: name.trim(),
+      screenshot_path,
+      screenshot_base64,
+    });
+    return NextResponse.json(theme);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[themes POST] createTheme failed:", message);
+    return NextResponse.json(
+      { error: "Failed to save theme", details: message },
+      { status: 500 }
+    );
+  }
 }

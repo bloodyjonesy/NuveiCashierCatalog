@@ -12,8 +12,9 @@ function getConnectionString(): string {
   const url =
     process.env.DATABASE_URL?.trim() ||
     process.env.DATABASE_PRIVATE_URL?.trim() ||
+    process.env.DATABASE_PUBLIC_URL?.trim() ||
     "";
-  if (!url) throw new Error("DATABASE_URL or DATABASE_PRIVATE_URL is required for database mode");
+  if (!url) throw new Error("DATABASE_URL, DATABASE_PRIVATE_URL, or DATABASE_PUBLIC_URL is required for database mode");
   return url;
 }
 
@@ -142,6 +143,8 @@ function generateId(): string {
 
 export function useDatabase(): boolean {
   return Boolean(
-    process.env.DATABASE_URL?.trim() || process.env.DATABASE_PRIVATE_URL?.trim()
+    process.env.DATABASE_URL?.trim() ||
+      process.env.DATABASE_PRIVATE_URL?.trim() ||
+      process.env.DATABASE_PUBLIC_URL?.trim()
   );
 }

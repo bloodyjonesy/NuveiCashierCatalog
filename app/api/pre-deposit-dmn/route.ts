@@ -33,8 +33,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (mode === "decline_with_message" && declineMessage) {
-    const msg = encodeURIComponent(declineMessage);
-    return new NextResponse(`action=DECLINE&message=${msg}`, {
+    return new NextResponse(`action=DECLINE&message=${declineMessage}`, {
       status: 200,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
