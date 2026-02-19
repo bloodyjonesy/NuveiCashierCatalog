@@ -134,29 +134,15 @@ function toQueryString(params: NuveiHostedParams): string {
   return entries.join("&");
 }
 
-/** themeType is optional and not part of checksum. Append to URL for desktop/mobile layout. */
-export type ThemeType = "DESKTOP" | "SMARTPHONE";
-
-export function appendThemeType(url: string, themeType: ThemeType): string {
-  const sep = url.includes("?") ? "&" : "?";
-  const existing = /[?&]themeType=/i.test(url);
-  if (existing) {
-    return url.replace(/themeType=[^&]+/i, `themeType=${themeType}`);
-  }
-  return `${url}${sep}themeType=${themeType}`;
-}
-
 /** Backend: build full hosted page URL with checksum (uses secret from env). */
 export function buildHostedUrlNode(
   params: Partial<NuveiHostedParams> & { merchant_id: string; merchant_site_id: string },
-  secretKey: string,
-  themeType: ThemeType = "DESKTOP"
+  secretKey: string
 ): string {
   const full = buildNuveiParams(params);
   const checksum = computeChecksumNode(secretKey, full);
   const qs = toQueryString(full) + "&checksum=" + encodeURIComponent(checksum);
-  const url = `${getBaseUrl()}?${qs}`;
-  return appendThemeType(url, themeType);
+  return `${getBaseUrl()}?${qs}`;
 }
 
 export { toNuveiTimestamp, concatValuesForChecksum, getBaseUrl, NUVEI_BASE, SANDBOX_BASE, PRODUCTION_BASE, PARAM_ORDER };

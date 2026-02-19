@@ -32,8 +32,6 @@ export async function POST(request: NextRequest) {
   const total_amount =
     typeof body.total_amount === "string" ? body.total_amount : "1.00";
   const currency = typeof body.currency === "string" ? body.currency : "USD";
-  const themeType =
-    body.themeType === "SMARTPHONE" ? "SMARTPHONE" : "DESKTOP";
 
   const url = buildHostedUrlNode(
     {
@@ -45,8 +43,7 @@ export async function POST(request: NextRequest) {
       theme_id,
       item_amount_1: total_amount,
     },
-    secretKey,
-    themeType
+    secretKey
   );
 
   return NextResponse.json({ url });

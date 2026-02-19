@@ -10,13 +10,11 @@ import {
   getStoredCredentials,
 } from "@/lib/credentials";
 import { buildHostedUrlClient } from "@/lib/nuvei-client";
-import { appendThemeType } from "@/lib/nuvei-params";
 import type { ThemeRecord, CustomerRecord } from "@/lib/types";
 
 export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   const [useDemo] = useState(getUseDemo());
   const creds = getStoredCredentials();
-  const [themeType, setThemeType] = useState<"DESKTOP" | "SMARTPHONE">("DESKTOP");
   const [customerMode, setCustomerMode] = useState<"new" | "returning">("new");
   const [newUserTokenId, setNewUserTokenId] = useState("newuser@test.com");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -57,7 +55,6 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             useDemo: true,
             theme_id: theme.theme_id,
             user_token_id,
-            themeType,
           }),
         });
         const data = await res.json();
@@ -76,8 +73,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             user_token_id,
             theme_id: theme.theme_id,
           },
-          creds.merchantSecretKey,
-          themeType
+          creds.merchantSecretKey
         );
         setIframeUrl(url);
       }
@@ -86,7 +82,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
     } finally {
       setLoading(false);
     }
-  }, [useDemo, theme.theme_id, themeType, creds, customerMode, newUserTokenId, selectedCustomerId, customers]);
+  }, [useDemo, theme.theme_id, creds, customerMode, newUserTokenId, selectedCustomerId, customers]);
 
   const handleSaveAsCustomer = async () => {
     const label = saveCustomerLabel.trim();
@@ -160,32 +156,6 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
               </select>
             </div>
           )}
-          <div className="flex gap-2 items-center">
-            <Label>Layout</Label>
-            <Button
-              type="button"
-              variant={themeType === "DESKTOP" ? "default" : "secondary"}
-              size="sm"
-              onClick={() => {
-                setThemeType("DESKTOP");
-                if (iframeUrl) setIframeUrl(appendThemeType(iframeUrl, "DESKTOP"));
-              }}
-            >
-              Desktop
-            </Button>
-            <Button
-              type="button"
-              variant={themeType === "SMARTPHONE" ? "default" : "secondary"}
-              size="sm"
-              onClick={() => {
-                setThemeType("SMARTPHONE");
-                if (iframeUrl) setIframeUrl(appendThemeType(iframeUrl, "SMARTPHONE"));
-              }}
-            >
-              Mobile
-            </Button>
-          </div>
-
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button onClick={loadPaymentPage} disabled={loading}>
             {loading ? "Loading…" : "Open payment page"}
