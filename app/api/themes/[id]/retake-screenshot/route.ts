@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getThemeById, updateTheme } from "@/lib/store";
 import { buildHostedUrlNode, buildNuveiParams } from "@/lib/nuvei-params";
 import { captureScreenshot } from "@/lib/capture-screenshot";
+import { extractPaletteFromBase64 } from "@/lib/color-palette";
 
 export async function POST(
   _request: NextRequest,
@@ -35,9 +36,11 @@ export async function POST(
 
   try {
     const { base64, publicPath } = await captureScreenshot(url);
+    const color_palette = base64 ? await extractPaletteFromBase64(base64) : undefined;
     const updated = await updateTheme(id, {
       screenshot_base64: base64,
       screenshot_path: publicPath ?? null,
+      ...(color_palette?.length ? { color_palette } : {}),
     });
     if (!updated) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

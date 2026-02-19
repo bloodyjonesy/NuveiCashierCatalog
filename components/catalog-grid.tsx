@@ -185,6 +185,23 @@ export function CatalogGrid() {
                 <>
                   <h3 className="font-semibold truncate">{theme.name}</h3>
                   <p className="text-sm text-muted-foreground">Theme ID: {theme.theme_id}</p>
+                  {theme.color_palette?.length ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {theme.color_palette.map((hex, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1 rounded border border-border"
+                          title={hex}
+                        >
+                          <span
+                            className="h-4 w-4 shrink-0 rounded-sm"
+                            style={{ backgroundColor: hex }}
+                          />
+                          <span className="text-xs font-mono text-muted-foreground">{hex}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </>
               )}
             </CardContent>

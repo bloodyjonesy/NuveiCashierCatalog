@@ -82,6 +82,7 @@ export async function createTheme(
     name: input.name,
     screenshot_path: input.screenshot_path ?? null,
     screenshot_base64: input.screenshot_base64 ?? null,
+    color_palette: input.color_palette ?? null,
   };
   themes.push(theme);
   writeThemes(themes);
@@ -90,7 +91,7 @@ export async function createTheme(
 
 export async function updateTheme(
   id: string,
-  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64">>
+  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette">>
 ): Promise<ThemeRecord | undefined> {
   if (useDatabase()) return dbUpdateTheme(id, updates);
   const themes = readThemes();

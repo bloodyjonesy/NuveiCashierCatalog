@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllThemes, createTheme } from "@/lib/store";
+import { extractPaletteFromBase64 } from "@/lib/color-palette";
 
 export async function GET() {
   try {
@@ -32,11 +33,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const color_palette =
+      screenshot_base64 != null
+        ? await extractPaletteFromBase64(screenshot_base64)
+        : undefined;
     const theme = await createTheme({
       theme_id: theme_id.trim(),
       name: name.trim(),
       screenshot_path,
       screenshot_base64,
+      ...(color_palette.length > 0 && { color_palette }),
     });
     return NextResponse.json(theme);
   } catch (err) {
