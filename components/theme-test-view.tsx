@@ -31,6 +31,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   const [totalAmount, setTotalAmount] = useState("1.00");
   const [currency, setCurrency] = useState("USD");
   const [itemName, setItemName] = useState("Test item");
+  const [showMessageKeys, setShowMessageKeys] = useState(false);
 
   useEffect(() => {
     fetch("/api/pre-deposit-config")
@@ -102,6 +103,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             total_amount: totalAmount.trim() || "1.00",
             currency: currency.trim() || "USD",
             item_name_1: itemName.trim() || "Test item",
+            showMessageKeys: showMessageKeys,
           }),
         });
         const data = await res.json();
@@ -125,7 +127,8 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             item_name_1: itemName.trim() || "Test item",
             item_amount_1: amount,
           },
-          creds.merchantSecretKey
+          creds.merchantSecretKey,
+          showMessageKeys ? { showMessageKeys: true } : undefined
         );
         setIframeUrl(url);
       }
@@ -134,7 +137,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
     } finally {
       setLoading(false);
     }
-  }, [useDemo, theme.theme_id, creds, customerMode, newUserTokenId, selectedCustomerId, customers, totalAmount, currency, itemName]);
+  }, [useDemo, theme.theme_id, creds, customerMode, newUserTokenId, selectedCustomerId, customers, totalAmount, currency, itemName, showMessageKeys]);
 
   const handleSaveAsCustomer = async () => {
     const label = saveCustomerLabel.trim();
@@ -247,6 +250,16 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
                 placeholder="Test item"
                 className="h-9"
               />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="checkbox"
+                id="show_message_keys"
+                checked={showMessageKeys}
+                onChange={(e) => setShowMessageKeys(e.target.checked)}
+                className="rounded border-input"
+              />
+              <Label htmlFor="show_message_keys" className="text-xs whitespace-nowrap cursor-pointer">Show Message Keys</Label>
             </div>
             <Button onClick={loadPaymentPage} disabled={loading} className="shrink-0">
               {loading ? "Loading…" : "Open payment page"}

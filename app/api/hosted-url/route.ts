@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
   const currency = typeof body.currency === "string" ? body.currency : "USD";
   const item_name_1 =
     typeof body.item_name_1 === "string" ? body.item_name_1 : "Test item";
+  const showMessageKeys = body.showMessageKeys === true;
 
   const url = buildHostedUrlNode(
     {
@@ -46,7 +47,8 @@ export async function POST(request: NextRequest) {
       item_amount_1: total_amount,
       item_name_1,
     },
-    secretKey
+    secretKey,
+    showMessageKeys ? { showMessageKeys: true } : undefined
   );
 
   return NextResponse.json({ url });

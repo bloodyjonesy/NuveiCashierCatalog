@@ -8,6 +8,7 @@ import {
   concatValuesForChecksum,
   getBaseUrl,
   type NuveiHostedParams,
+  type NuveiUrlOptions,
 } from "./nuvei-params";
 
 /** Compute SHA-256 hex in the browser. */
@@ -28,13 +29,14 @@ export async function buildHostedUrlClient(
     user_token_id: string;
     theme_id?: string;
   },
-  secretKey: string
+  secretKey: string,
+  options?: NuveiUrlOptions
 ): Promise<string> {
   const full = buildNuveiParams(params);
   const secret = String(secretKey).trim().replace(/\r?\n/g, "");
   const toHash = secret + concatValuesForChecksum(full);
   const checksum = await sha256Hex(toHash);
-  const qs =
+  let qs =
     [
       "merchant_id",
       "merchant_site_id",
@@ -55,5 +57,6 @@ export async function buildHostedUrlClient(
       })
       .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent((full as Record<string, string>)[k])}`)
       .join("&") + `&checksum=${encodeURIComponent(checksum)}`;
+  if (options?.showMessageKeys) qs += "&showMessageKeys=True";
   return `${getBaseUrl()}?${qs}`;
 }
