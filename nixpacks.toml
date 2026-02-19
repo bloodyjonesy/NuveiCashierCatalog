@@ -1,0 +1,9 @@
+# Ensure Playwright Chromium is available for screenshot API
+[phases.setup]
+nixPkgs = ["nodejs_20", "chromium"]
+
+[phases.install]
+cmds = ["npm ci", "npx playwright install chromium"]
+
+[start]
+cmd = "npm run start"
