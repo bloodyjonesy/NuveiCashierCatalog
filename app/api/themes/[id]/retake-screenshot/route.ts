@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const theme = getThemeById(id);
+  const theme = await getThemeById(id);
   if (!theme) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -35,7 +35,7 @@ export async function POST(
 
   try {
     const { base64, publicPath } = await captureScreenshot(url);
-    const updated = updateTheme(id, {
+    const updated = await updateTheme(id, {
       screenshot_base64: base64,
       screenshot_path: publicPath ?? null,
     });

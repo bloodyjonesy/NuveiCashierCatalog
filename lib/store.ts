@@ -1,6 +1,14 @@
 import fs from "fs";
 import path from "path";
 import type { ThemeRecord, CustomerRecord } from "./types";
+import {
+  useDatabase,
+  dbGetAllThemes,
+  dbGetThemeById,
+  dbCreateTheme,
+  dbUpdateTheme,
+  dbDeleteTheme,
+} from "./db";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const THEMES_FILE = path.join(DATA_DIR, "themes.json");
@@ -52,18 +60,21 @@ function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-// Themes API
-export function getAllThemes(): ThemeRecord[] {
+// Themes API — uses PostgreSQL when DATABASE_URL is set, else JSON file (data/themes.json)
+export async function getAllThemes(): Promise<ThemeRecord[]> {
+  if (useDatabase()) return dbGetAllThemes();
   return readThemes();
 }
 
-export function getThemeById(id: string): ThemeRecord | undefined {
+export async function getThemeById(id: string): Promise<ThemeRecord | undefined> {
+  if (useDatabase()) return dbGetThemeById(id);
   return readThemes().find((t) => t.id === id);
 }
 
-export function createTheme(
+export async function createTheme(
   input: Omit<ThemeRecord, "id"> & { id?: string }
-): ThemeRecord {
+): Promise<ThemeRecord> {
+  if (useDatabase()) return dbCreateTheme(input);
   const themes = readThemes();
   const theme: ThemeRecord = {
     id: input.id ?? generateId(),
@@ -77,10 +88,11 @@ export function createTheme(
   return theme;
 }
 
-export function updateTheme(
+export async function updateTheme(
   id: string,
   updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64">>
-): ThemeRecord | undefined {
+): Promise<ThemeRecord | undefined> {
+  if (useDatabase()) return dbUpdateTheme(id, updates);
   const themes = readThemes();
   const i = themes.findIndex((t) => t.id === id);
   if (i === -1) return undefined;
@@ -89,7 +101,8 @@ export function updateTheme(
   return themes[i];
 }
 
-export function deleteTheme(id: string): boolean {
+export async function deleteTheme(id: string): Promise<boolean> {
+  if (useDatabase()) return dbDeleteTheme(id);
   const themes = readThemes();
   const filtered = themes.filter((t) => t.id !== id);
   if (filtered.length === themes.length) return false;

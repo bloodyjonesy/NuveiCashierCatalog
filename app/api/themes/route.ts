@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllThemes, createTheme } from "@/lib/store";
 
 export async function GET() {
-  const themes = getAllThemes();
+  const themes = await getAllThemes();
   return NextResponse.json(themes);
 }
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const theme = createTheme({
+  const theme = await createTheme({
     theme_id: theme_id.trim(),
     name: name.trim(),
     screenshot_path,

@@ -8,7 +8,7 @@ export default async function ThemeTestPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const theme = getThemeById(id);
+  const theme = await getThemeById(id);
   if (!theme) notFound();
   return (
     <div>
