@@ -185,23 +185,28 @@ export function CatalogGrid() {
                 <>
                   <h3 className="font-semibold truncate">{theme.name}</h3>
                   <p className="text-sm text-muted-foreground">Theme ID: {theme.theme_id}</p>
-                  {theme.color_palette?.length ? (
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      {theme.color_palette.map((hex, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center gap-1 rounded border border-border"
-                          title={hex}
-                        >
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1.5">Palette</p>
+                    {theme.color_palette?.length ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {theme.color_palette.map((hex, i) => (
                           <span
-                            className="h-4 w-4 shrink-0 rounded-sm"
-                            style={{ backgroundColor: hex }}
-                          />
-                          <span className="text-xs font-mono text-muted-foreground">{hex}</span>
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                            key={i}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-1.5 py-1"
+                            title={hex}
+                          >
+                            <span
+                              className="h-5 w-5 shrink-0 rounded border border-border/50"
+                              style={{ backgroundColor: hex }}
+                            />
+                            <span className="text-xs font-mono text-muted-foreground">{hex}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">No palette — retake screenshot to generate</p>
+                    )}
+                  </div>
                 </>
               )}
             </CardContent>

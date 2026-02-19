@@ -103,7 +103,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
             total_amount: totalAmount.trim() || "1.00",
             currency: currency.trim() || "USD",
             item_name_1: itemName.trim() || "Test item",
-            showMessageKeys: showMessageKeys,
+            ...(showMessageKeys && { showMessageKeys: true }),
           }),
         });
         const data = await res.json();
@@ -251,62 +251,68 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
                 className="h-9"
               />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <input
-                type="checkbox"
-                id="show_message_keys"
-                checked={showMessageKeys}
-                onChange={(e) => setShowMessageKeys(e.target.checked)}
-                className="rounded border-input"
-              />
-              <Label htmlFor="show_message_keys" className="text-xs whitespace-nowrap cursor-pointer">Show Message Keys</Label>
+            <div className="space-y-2 shrink-0">
+              <Label className="text-xs block">Show Message Keys</Label>
+              <div className="flex h-9 items-center">
+                <input
+                  type="checkbox"
+                  id="show_message_keys"
+                  checked={showMessageKeys}
+                  onChange={(e) => setShowMessageKeys(e.target.checked)}
+                  className="rounded border-input"
+                />
+                <Label htmlFor="show_message_keys" className="text-xs whitespace-nowrap cursor-pointer ml-2">Include in URL when ticked</Label>
+              </div>
             </div>
             <Button onClick={loadPaymentPage} disabled={loading} className="shrink-0">
               {loading ? "Loading…" : "Open payment page"}
             </Button>
-            <div className="flex flex-wrap items-end gap-4 ml-auto">
-              <div className="space-y-2 min-w-[200px]">
-                <Label className="text-xs">Pre-deposit DMN response</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                  value={preDepositMode}
-                  onChange={(e) => {
-                    const m = e.target.value as PreDepositMode;
-                    setPreDepositMode(m);
-                    savePreDepositConfig(m, preDepositMessage);
-                  }}
-                >
-                  <option value="always_accept">Always accept</option>
-                  <option value="decline_with_message">Decline with message</option>
-                  <option value="decline_without_message">Decline without message</option>
-                </select>
-                {preDepositMode === "decline_with_message" && (
-                  <Input
-                    value={preDepositMessage}
-                    onChange={(e) => setPreDepositMessage(e.target.value)}
-                    onBlur={() => savePreDepositConfig(preDepositMode, preDepositMessage)}
-                    placeholder="Decline message"
-                    className="text-sm h-9"
-                  />
-                )}
-              </div>
-              <div className="space-y-2 flex-1 min-w-0">
-                <Label htmlFor="save_customer_label">Save as demo customer</Label>
-                <Input
-                  id="save_customer_label"
-                  value={saveCustomerLabel}
-                  onChange={(e) => setSaveCustomerLabel(e.target.value)}
-                  placeholder="e.g. Returning – John"
-                />
-              </div>
-              <Button
-                variant="secondary"
-                onClick={handleSaveAsCustomer}
-                disabled={savingCustomer || !saveCustomerLabel.trim()}
+          </div>
+          <div className="flex flex-wrap items-end gap-4 pt-4 border-t border-border">
+            <div className="space-y-2 min-w-[200px]">
+              <Label className="text-xs">Pre-deposit DMN response</Label>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                value={preDepositMode}
+                onChange={(e) => {
+                  const m = e.target.value as PreDepositMode;
+                  setPreDepositMode(m);
+                  savePreDepositConfig(m, preDepositMessage);
+                }}
               >
-                {savingCustomer ? "Saving…" : "Save"}
-              </Button>
+                <option value="always_accept">Always accept</option>
+                <option value="decline_with_message">Decline with message</option>
+                <option value="decline_without_message">Decline without message</option>
+              </select>
+              {preDepositMode === "decline_with_message" && (
+                <Input
+                  value={preDepositMessage}
+                  onChange={(e) => setPreDepositMessage(e.target.value)}
+                  onBlur={() => savePreDepositConfig(preDepositMode, preDepositMessage)}
+                  placeholder="Decline message"
+                  className="text-sm h-9 mt-1"
+                />
+              )}
             </div>
+            <div className="space-y-2 min-w-[200px]">
+              <Label htmlFor="save_customer_label" className="text-xs">Save as demo customer</Label>
+              <Input
+                id="save_customer_label"
+                value={saveCustomerLabel}
+                onChange={(e) => setSaveCustomerLabel(e.target.value)}
+                placeholder="e.g. Returning – John"
+                className="h-9"
+              />
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-9"
+              onClick={handleSaveAsCustomer}
+              disabled={savingCustomer || !saveCustomerLabel.trim()}
+            >
+              {savingCustomer ? "Saving…" : "Save"}
+            </Button>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
