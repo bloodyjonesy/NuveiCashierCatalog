@@ -1,10 +1,23 @@
 /**
  * Nuvei Payment Page (purchase.do) parameter order and checksum.
  * Order must match request query string and checksum concatenation.
+ * Sandbox: https://ppp-test.safecharge.com/ppp/purchase.do
+ * Production: https://secure.nuvei.com/ppp/purchase.do
  * @see https://docs.nuvei.com/documentation/accept-payment/payment-page/quick-start-for-payment-page
  */
 
-const NUVEI_BASE = "https://secure.nuvei.com/ppp/purchase.do";
+const SANDBOX_BASE = "https://ppp-test.safecharge.com/ppp/purchase.do";
+const PRODUCTION_BASE = "https://secure.nuvei.com/ppp/purchase.do";
+
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return (process.env.NEXT_PUBLIC_NUVEI_PPP_BASE_URL ?? SANDBOX_BASE).trim();
+  }
+  return (process.env.NUVEI_PPP_BASE_URL ?? process.env.NEXT_PUBLIC_NUVEI_PPP_BASE_URL ?? SANDBOX_BASE).trim();
+}
+
+/** @deprecated Use getBaseUrl() for sandbox/production. */
+const NUVEI_BASE = SANDBOX_BASE;
 
 export type NuveiHostedParams = {
   merchant_id: string;
@@ -129,7 +142,7 @@ export function buildHostedUrlNode(
   const full = buildNuveiParams(params);
   const checksum = computeChecksumNode(secretKey, full);
   const qs = toQueryString(full) + "&checksum=" + encodeURIComponent(checksum);
-  return `${NUVEI_BASE}?${qs}`;
+  return `${getBaseUrl()}?${qs}`;
 }
 
-export { toNuveiTimestamp, concatValuesForChecksum, NUVEI_BASE, PARAM_ORDER };
+export { toNuveiTimestamp, concatValuesForChecksum, getBaseUrl, NUVEI_BASE, SANDBOX_BASE, PRODUCTION_BASE, PARAM_ORDER };

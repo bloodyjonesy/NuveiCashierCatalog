@@ -6,7 +6,7 @@
 import {
   buildNuveiParams,
   concatValuesForChecksum,
-  NUVEI_BASE,
+  getBaseUrl,
   type NuveiHostedParams,
 } from "./nuvei-params";
 
@@ -55,5 +55,5 @@ export async function buildHostedUrlClient(
       })
       .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent((full as Record<string, string>)[k])}`)
       .join("&") + `&checksum=${encodeURIComponent(checksum)}`;
-  return `${NUVEI_BASE}?${qs}`;
+  return `${getBaseUrl()}?${qs}`;
 }
