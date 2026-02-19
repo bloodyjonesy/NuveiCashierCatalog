@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { addDmn } from "@/lib/dmn-store";
 
 /**
- * Echo endpoint for Nuvei payment page notify_url.
- * Logs the payload and returns 200 so Nuvei accepts the notification.
- * For production you would validate and process the notification.
+ * Legacy notify endpoint. Also stores payload in DMN store for display on view page.
+ * Prefer configuring Nuvei to use /api/dmn for the DMN URL (see Credentials → Integration URLs).
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const contentType = request.headers.get("content-type") || "";
-    let data: unknown = body;
+    let data: Record<string, unknown>;
     if (contentType.includes("application/json")) {
       try {
-        data = JSON.parse(body);
+        const parsed = JSON.parse(body);
+        data = typeof parsed === "object" && parsed !== null ? parsed : { raw: body };
       } catch {
-        // keep as string
+        data = { raw: body };
       }
+    } else {
+      const params = new URLSearchParams(body);
+      data = Object.fromEntries(params.entries());
     }
-    if (process.env.NODE_ENV !== "test") {
-      console.log("[Nuvei notify]", data);
-    }
+    addDmn(data);
   } catch {
     // ignore
   }

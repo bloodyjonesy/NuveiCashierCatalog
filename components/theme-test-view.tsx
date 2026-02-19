@@ -24,6 +24,20 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   const [error, setError] = useState<string | null>(null);
   const [saveCustomerLabel, setSaveCustomerLabel] = useState("");
   const [savingCustomer, setSavingCustomer] = useState(false);
+  const [dmns, setDmns] = useState<Record<string, unknown>[]>([]);
+
+  useEffect(() => {
+    if (!iframeUrl) return;
+    const fetchDmns = () => {
+      fetch("/api/dmn")
+        .then((r) => r.json())
+        .then((list) => setDmns(Array.isArray(list) ? list : []))
+        .catch(() => {});
+    };
+    fetchDmns();
+    const t = setInterval(fetchDmns, 3000);
+    return () => clearInterval(t);
+  }, [iframeUrl]);
 
   const loadCustomers = useCallback(() => {
     fetch("/api/customers")
@@ -210,6 +224,47 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
           )}
         </CardContent>
       </Card>
+
+      {iframeUrl && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-medium">DMNs received</h2>
+            <p className="text-sm text-muted-foreground">
+              Notifications sent to your DMN URL (Credentials → Integration URLs). Polls every 3s.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {dmns.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No DMNs yet. Configure your Nuvei account to use the DMN URL and complete a payment or trigger a notification.</p>
+            ) : (
+              <div className="space-y-3 max-h-[280px] overflow-y-auto">
+                {dmns.map((dmn, i) => (
+                  <div key={i} className="rounded border bg-muted/50 p-3 text-xs font-mono">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {["ppp_status", "Status", "totalAmount", "currency", "message", "PPP_TransactionId", "productId", "_receivedAt", "_source"].map(
+                        (k) =>
+                          (dmn as Record<string, unknown>)[k] != null &&
+                          (dmn as Record<string, unknown>)[k] !== "" && (
+                            <span key={k}>
+                              <span className="text-muted-foreground">{k}:</span>{" "}
+                              {String((dmn as Record<string, unknown>)[k])}
+                            </span>
+                          )
+                      )}
+                    </div>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-muted-foreground">All params</summary>
+                      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all">
+                        {JSON.stringify(dmn, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
