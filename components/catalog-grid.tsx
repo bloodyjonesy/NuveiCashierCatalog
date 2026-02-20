@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2, Camera, Pencil } from "lucide-react";
+import { ExternalLink, Trash2, Camera, Pencil, Palette } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAdmin } from "@/contexts/admin-context";
 import type { ThemeRecord } from "@/lib/types";
@@ -272,6 +272,11 @@ export function CatalogGrid() {
               <Button variant="secondary" size="sm" className="w-full gap-2">
                 <ExternalLink className="h-4 w-4 shrink-0" />
                 View & test
+              </Button>
+            </Link>
+            <Link href={`/theme/${theme.id}/customize`}>
+              <Button variant="outline" size="sm" title="Customize theme">
+                <Palette className="h-4 w-4" />
               </Button>
             </Link>
             {isAdmin && renamingId !== theme.id && (

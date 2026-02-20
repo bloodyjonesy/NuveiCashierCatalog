@@ -7,6 +7,8 @@ export type ThemeRecord = {
   screenshot_base64?: string | null;
   /** Hex color palette extracted from screenshot on save (e.g. 5 colors) */
   color_palette?: string[] | null;
+  /** Custom CSS for theme customizer (save/export) */
+  custom_css?: string | null;
 };
 
 export type CustomerRecord = {

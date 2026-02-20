@@ -59,13 +59,16 @@ export async function initThemesTable(): Promise<void> {
   await p.query(
     `ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS color_palette TEXT`
   );
+  await p.query(
+    `ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS custom_css TEXT`
+  );
 }
 
 export async function dbGetAllThemes(): Promise<ThemeRecord[]> {
   await ensureSchema();
   const p = getPool();
   const res = await p.query(
-    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette FROM ${TABLE} ORDER BY name`
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} ORDER BY name`
   );
   return res.rows.map((r) => ({
     id: r.id,
@@ -74,6 +77,7 @@ export async function dbGetAllThemes(): Promise<ThemeRecord[]> {
     screenshot_path: r.screenshot_path ?? null,
     screenshot_base64: r.screenshot_base64 ?? null,
     color_palette: parseColorPalette(r.color_palette),
+    custom_css: r.custom_css ?? null,
   }));
 }
 
@@ -91,7 +95,7 @@ export async function dbGetThemeById(id: string): Promise<ThemeRecord | undefine
   await ensureSchema();
   const p = getPool();
   const res = await p.query(
-    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette FROM ${TABLE} WHERE id = $1`,
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} WHERE id = $1`,
     [id]
   );
   const r = res.rows[0];
@@ -103,6 +107,7 @@ export async function dbGetThemeById(id: string): Promise<ThemeRecord | undefine
     screenshot_path: r.screenshot_path ?? null,
     screenshot_base64: r.screenshot_base64 ?? null,
     color_palette: parseColorPalette(r.color_palette),
+    custom_css: r.custom_css ?? null,
   };
 }
 
@@ -113,7 +118,7 @@ export async function dbCreateTheme(
   const id = input.id ?? generateId();
   const p = getPool();
   await p.query(
-    `INSERT INTO ${TABLE} (id, theme_id, name, screenshot_path, screenshot_base64, color_palette) VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO ${TABLE} (id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       id,
       input.theme_id,
@@ -121,6 +126,7 @@ export async function dbCreateTheme(
       input.screenshot_path ?? null,
       input.screenshot_base64 ?? null,
       input.color_palette != null ? JSON.stringify(input.color_palette) : null,
+      input.custom_css ?? null,
     ]
   );
   return {
@@ -130,12 +136,13 @@ export async function dbCreateTheme(
     screenshot_path: input.screenshot_path ?? null,
     screenshot_base64: input.screenshot_base64 ?? null,
     color_palette: input.color_palette ?? null,
+    custom_css: input.custom_css ?? null,
   };
 }
 
 export async function dbUpdateTheme(
   id: string,
-  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette">>
+  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette" | "custom_css">>
 ): Promise<ThemeRecord | undefined> {
   await ensureSchema();
   const current = await dbGetThemeById(id);
@@ -143,13 +150,14 @@ export async function dbUpdateTheme(
   const merged = { ...current, ...updates };
   const p = getPool();
   await p.query(
-    `UPDATE ${TABLE} SET theme_id = $1, name = $2, screenshot_path = $3, screenshot_base64 = $4, color_palette = $5 WHERE id = $6`,
+    `UPDATE ${TABLE} SET theme_id = $1, name = $2, screenshot_path = $3, screenshot_base64 = $4, color_palette = $5, custom_css = $6 WHERE id = $7`,
     [
       merged.theme_id,
       merged.name,
       merged.screenshot_path ?? null,
       merged.screenshot_base64 ?? null,
       merged.color_palette != null ? JSON.stringify(merged.color_palette) : null,
+      merged.custom_css ?? null,
       id,
     ]
   );
