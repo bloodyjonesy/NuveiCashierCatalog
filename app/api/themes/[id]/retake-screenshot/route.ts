@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getThemeById, updateTheme } from "@/lib/store";
 import { buildHostedUrlNode, buildNuveiParams } from "@/lib/nuvei-params";
 import { captureScreenshot } from "@/lib/capture-screenshot";
-import { extractPaletteFromBase64 } from "@/lib/color-palette";
+import { extractPaletteFromBase64, type PaletteDebug } from "@/lib/color-palette";
 
 export async function POST(
   _request: NextRequest,
@@ -34,16 +34,24 @@ export async function POST(
     secretKey
   );
 
+  const debugSteps: PaletteDebug[] = [];
   try {
     const { base64, publicPath } = await captureScreenshot(url);
     console.log("[retake-screenshot] themeId=" + id, {
       base64Length: base64?.length ?? 0,
       hasPublicPath: !!publicPath,
     });
-    const color_palette = base64 ? await extractPaletteFromBase64(base64) : [];
+    const color_palette = base64
+      ? await extractPaletteFromBase64(base64, (d) => debugSteps.push(d))
+      : [];
+    debugSteps.unshift({
+      step: "capture",
+      bufferLength: base64?.length ?? 0,
+    });
     console.log("[retake-screenshot] palette result", {
       paletteLength: color_palette?.length ?? 0,
       palette: color_palette,
+      debugSteps: debugSteps.length,
     });
     const updated = await updateTheme(id, {
       screenshot_base64: base64,
@@ -57,7 +65,10 @@ export async function POST(
     if (!updated) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json(updated);
+    return NextResponse.json({
+      ...updated,
+      _debug: { paletteSteps: debugSteps },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Retake screenshot failed:", err);
