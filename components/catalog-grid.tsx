@@ -9,6 +9,7 @@ import { ExternalLink, Trash2, Camera, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAdmin } from "@/contexts/admin-context";
 import type { ThemeRecord } from "@/lib/types";
+import { getColorName, COLOR_NAMES } from "@/lib/color-names";
 
 export function CatalogGrid() {
   const router = useRouter();
@@ -19,6 +20,24 @@ export function CatalogGrid() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [colorFilter, setColorFilter] = useState<Set<string>>(new Set());
+
+  const themeHasColor = (theme: ThemeRecord, colorName: string) =>
+    theme.color_palette?.some((hex) => getColorName(hex) === colorName) ?? false;
+
+  const filteredThemes =
+    colorFilter.size === 0
+      ? themes
+      : themes.filter((t) => [...colorFilter].some((c) => themeHasColor(t, c)));
+
+  const toggleColorFilter = (name: string) => {
+    setColorFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
 
   const loadThemes = () => {
     fetch("/api/themes")
@@ -120,8 +139,43 @@ export function CatalogGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {themes.map((theme) => (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-card p-4">
+        <span className="text-sm font-medium text-muted-foreground">Filter by color:</span>
+        <div className="flex flex-wrap gap-3">
+          {COLOR_NAMES.map((name) => (
+            <label
+              key={name}
+              className="inline-flex cursor-pointer items-center gap-2 text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={colorFilter.has(name)}
+                onChange={() => toggleColorFilter(name)}
+                className="h-4 w-4 rounded border-border"
+              />
+              {name}
+            </label>
+          ))}
+        </div>
+        {colorFilter.size > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setColorFilter(new Set())}
+            className="text-muted-foreground"
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+      {filteredThemes.length === 0 && colorFilter.size > 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
+          No themes match the selected colors. Try different filters or clear to see all.
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {filteredThemes.map((theme) => (
         <Card
           key={theme.id}
           className="overflow-hidden transition-shadow hover:shadow-md"
@@ -196,13 +250,15 @@ export function CatalogGrid() {
                           <span
                             key={i}
                             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-1.5 py-1"
-                            title={hex}
+                            title={`${getColorName(hex)} ${hex}`}
                           >
                             <span
                               className="h-5 w-5 shrink-0 rounded border border-border/50"
                               style={{ backgroundColor: hex }}
                             />
-                            <span className="text-xs font-mono text-muted-foreground">{hex}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {getColorName(hex)} <span className="font-mono">{hex}</span>
+                            </span>
                           </span>
                         ))}
                       </div>
@@ -256,6 +312,8 @@ export function CatalogGrid() {
           </CardFooter>
         </Card>
       ))}
+      </div>
+      )}
     </div>
   );
 }
