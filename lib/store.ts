@@ -19,10 +19,11 @@ const CUSTOMERS_FILE = path.join(DATA_DIR, "customers.json");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
 const DEFAULT_THEME_ID_KEY = "default_theme_id";
+const DEFAULT_THEME_CUSTOM_CSS_KEY = "default_theme_custom_css";
 /** Hardcoded default theme ID when no setting is stored. */
 const FALLBACK_DEFAULT_THEME_ID = "223482";
 
-type Settings = { default_theme_id?: string | null };
+type Settings = { default_theme_id?: string | null; default_theme_custom_css?: string | null };
 
 function readSettings(): Settings {
   ensureDataDir();
@@ -133,6 +134,25 @@ export async function setDefaultThemeId(themeId: string | null): Promise<void> {
   } else {
     s.default_theme_id = themeId;
   }
+  writeSettings(s);
+}
+
+export async function getDefaultThemeCustomCss(): Promise<string> {
+  if (useDatabase()) {
+    const v = await dbGetSetting(DEFAULT_THEME_CUSTOM_CSS_KEY);
+    return typeof v === "string" ? v : "";
+  }
+  const v = readSettings().default_theme_custom_css;
+  return typeof v === "string" ? v : "";
+}
+
+export async function setDefaultThemeCustomCss(css: string): Promise<void> {
+  if (useDatabase()) {
+    await dbSetSetting(DEFAULT_THEME_CUSTOM_CSS_KEY, css);
+    return;
+  }
+  const s = readSettings();
+  s.default_theme_custom_css = css;
   writeSettings(s);
 }
 

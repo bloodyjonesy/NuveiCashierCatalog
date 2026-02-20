@@ -1,14 +1,15 @@
-import { getDefaultThemeId, getThemeByThemeId } from "@/lib/store";
+import { getDefaultThemeCustomCss } from "@/lib/store";
 import { CustomizePageClient } from "@/components/customize-page-client";
 
+const DEFAULT_THEME_ID = "223482";
+
 export default async function CustomizePage() {
-  const defaultThemeId = await getDefaultThemeId();
-  const theme = (await getThemeByThemeId(defaultThemeId)) ?? null;
+  const savedCss = await getDefaultThemeCustomCss();
 
   return (
     <CustomizePageClient
-      defaultThemeId={defaultThemeId}
-      theme={theme}
+      themeId={DEFAULT_THEME_ID}
+      initialCss={savedCss}
     />
   );
 }
