@@ -57,6 +57,34 @@ const DEFAULTS = {
 
 type ThemeValues = typeof DEFAULTS;
 
+const VALUE_LABELS: Record<keyof ThemeValues, string> = {
+  pageBg: "Page background",
+  textColor: "Text color",
+  accentColor: "Accent / Primary",
+  cardBg: "Card background",
+  headerBg: "Header / Borders",
+  mutedColor: "Muted / Labels",
+  successColor: "Success color",
+  errorColor: "Error color",
+  submitBg: "Button background",
+  submitText: "Button text color",
+  submitRadius: "Button border radius",
+  submitFontSize: "Button font size",
+  inputBorderColor: "Input border color",
+  inputTextColor: "Input text color",
+  inputFontSize: "Input font size",
+  inputBg: "Input background",
+  fontFamily: "Font family",
+  baseFontSize: "Base font size",
+  lightboxBg: "Modal background",
+  lightboxHeaderBg: "Modal header background",
+  lightboxHeaderText: "Modal header text",
+  lightboxContentText: "Modal content text",
+  bodyMaxWidth: "Body max width",
+  bodyPadding: "Body padding",
+  bodyMinWidth: "Body min width",
+};
+
 /* ------------------------------------------------------------------ */
 /*  CSS generation from control values                                 */
 /* ------------------------------------------------------------------ */
@@ -470,6 +498,16 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
     ? generatedCss + "\n\n/* Raw CSS overrides */\n" + addImportant(rawCssOverride)
     : generatedCss;
 
+  const changedEntries = useMemo(() => {
+    const entries: { key: keyof ThemeValues; label: string; from: string; to: string }[] = [];
+    for (const k of Object.keys(DEFAULTS) as (keyof ThemeValues)[]) {
+      if (values[k] !== DEFAULTS[k]) {
+        entries.push({ key: k, label: VALUE_LABELS[k], from: DEFAULTS[k], to: values[k] });
+      }
+    }
+    return entries;
+  }, [values]);
+
   const sendCssToIframe = useCallback(() => {
     const iframe = iframeRef.current;
     const win = iframe?.contentWindow;
@@ -778,67 +816,125 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
           )}
         </aside>
 
-        {/* Live preview */}
-        <div className="flex-1 min-w-0 flex flex-col border border-border rounded-lg overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-2 bg-muted/30 border-b border-border shrink-0">
-            <div className="flex gap-1.5">
-              <div className="h-3 w-3 rounded-full bg-red-400/60" />
-              <div className="h-3 w-3 rounded-full bg-yellow-400/60" />
-              <div className="h-3 w-3 rounded-full bg-green-400/60" />
+        {/* Right column: preview + changes */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+          {/* Live preview */}
+          <div className="flex-1 min-h-0 flex flex-col border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-2 bg-muted/30 border-b border-border shrink-0">
+              <div className="flex gap-1.5">
+                <div className="h-3 w-3 rounded-full bg-red-400/60" />
+                <div className="h-3 w-3 rounded-full bg-yellow-400/60" />
+                <div className="h-3 w-3 rounded-full bg-green-400/60" />
+              </div>
+              <span className="text-xs text-muted-foreground flex-1 truncate">
+                Nuvei Payment Page Preview
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={loadPreview}
+                disabled={loading}
+              >
+                <RotateCcw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                {loading ? "Loading..." : "Reload"}
+              </Button>
             </div>
-            <span className="text-xs text-muted-foreground flex-1 truncate">
-              Nuvei Payment Page Preview
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={loadPreview}
-              disabled={loading}
-            >
-              <RotateCcw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-              {loading ? "Loading..." : "Reload"}
-            </Button>
+
+            <div className="flex-1 bg-muted/10 relative">
+              {error && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-6 max-w-sm text-center">
+                    <p className="text-sm text-destructive font-medium mb-3">{error}</p>
+                    <Button size="sm" variant="outline" onClick={loadPreview}>
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {iframeUrl ? (
+                <iframe
+                  ref={iframeRef}
+                  src={iframeUrl}
+                  title="Payment page preview"
+                  className="w-full h-full min-h-[400px] border-0"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                  onLoad={handleIframeLoad}
+                />
+              ) : !error ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {loading ? (
+                    <div className="text-center space-y-3">
+                      <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                      <p className="text-sm text-muted-foreground">Loading payment page...</p>
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-3">
+                      <Eye className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                      <p className="text-sm text-muted-foreground">
+                        Preview will appear here
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
           </div>
 
-          <div className="flex-1 bg-muted/10 relative">
-            {error && (
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-6 max-w-sm text-center">
-                  <p className="text-sm text-destructive font-medium mb-3">{error}</p>
-                  <Button size="sm" variant="outline" onClick={loadPreview}>
-                    Retry
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {iframeUrl ? (
-              <iframe
-                ref={iframeRef}
-                src={iframeUrl}
-                title="Payment page preview"
-                className="w-full h-full min-h-[400px] border-0"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                onLoad={handleIframeLoad}
-              />
-            ) : !error ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                {loading ? (
-                  <div className="text-center space-y-3">
-                    <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-sm text-muted-foreground">Loading payment page...</p>
-                  </div>
-                ) : (
-                  <div className="text-center space-y-3">
-                    <Eye className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-                    <p className="text-sm text-muted-foreground">
-                      Preview will appear here
-                    </p>
-                  </div>
+          {/* Changes summary for development */}
+          <div className="shrink-0 border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-muted/30 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm font-medium">Changes for Development</span>
+                {changedEntries.length > 0 && (
+                  <span className="text-[10px] font-medium bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
+                    {changedEntries.length} change{changedEntries.length !== 1 ? "s" : ""}
+                  </span>
                 )}
               </div>
-            ) : null}
+              {changedEntries.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => {
+                    const lines = changedEntries.map(
+                      (e) => `${e.label}: ${e.from} → ${e.to}`
+                    );
+                    navigator.clipboard.writeText(lines.join("\n"));
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                  Copy
+                </Button>
+              )}
+            </div>
+            <div className="px-4 py-3 max-h-[180px] overflow-y-auto">
+              {changedEntries.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  No changes yet — adjust values in the sidebar to see a summary here.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {changedEntries.map((e) => (
+                    <div key={e.key} className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground w-[180px] shrink-0 truncate">{e.label}</span>
+                      <span className="font-mono text-muted-foreground/70 line-through">{e.from}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="font-mono font-medium">{e.to}</span>
+                      {e.to.match(/^#[0-9a-fA-F]{3,8}$/) && (
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-border shrink-0"
+                          style={{ backgroundColor: e.to }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
