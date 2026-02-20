@@ -443,7 +443,7 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
   const [showRawCss, setShowRawCss] = useState(false);
   const [rawCssOverride, setRawCssOverride] = useState("");
   const [proxyHtml, setProxyHtml] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<"saved" | "error" | null>(null);

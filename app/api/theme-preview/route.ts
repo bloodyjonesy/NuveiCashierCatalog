@@ -17,7 +17,15 @@ function isAllowedUrl(urlString: string): boolean {
 function rewriteRelativeUrls(html: string, origin: string): string {
   return html
     .replace(/\shref="\/([^"]*)"/g, (_, path) => ` href="${origin}/${path}"`)
-    .replace(/\ssrc="\/([^"]*)"/g, (_, path) => ` src="${origin}/${path}"`);
+    .replace(/\ssrc="\/([^"]*)"/g, (_, path) => ` src="${origin}/${path}"`)
+    .replace(/\saction="\/([^"]*)"/g, (_, path) => ` action="${origin}/${path}"`);
+}
+
+function stripCspMeta(html: string): string {
+  return html.replace(
+    /<meta[^>]+http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gi,
+    ""
+  );
 }
 
 const INJECTED_SCRIPT = `
@@ -59,11 +67,19 @@ export async function POST(request: NextRequest) {
       );
     }
     let html = await res.text();
-    const origin = new URL(url).origin;
-    html = rewriteRelativeUrls(html, origin);
+    const parsed = new URL(url);
+    const origin = parsed.origin;
+    const basePath = parsed.pathname.replace(/\/[^/]*$/, "/");
+    const baseHref = origin + basePath;
 
-    const inject = `<style id="live-custom-css"></style><script>${INJECTED_SCRIPT}<\\/script>`;
-    if (html.includes("</head>")) {
+    html = rewriteRelativeUrls(html, origin);
+    html = stripCspMeta(html);
+
+    const baseTag = `<base href="${baseHref}" />`;
+    const inject = `${baseTag}<style id="live-custom-css"></style><script>${INJECTED_SCRIPT}<\\/script>`;
+    if (html.includes("<head>")) {
+      html = html.replace("<head>", "<head>" + inject);
+    } else if (html.includes("</head>")) {
       html = html.replace("</head>", inject + "</head>");
     } else {
       html = inject + html;
