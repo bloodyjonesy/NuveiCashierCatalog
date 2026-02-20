@@ -497,7 +497,11 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
     loadPreview();
   }, [loadPreview]);
 
-  const handleIframeLoad = () => sendCssToIframe();
+  const handleIframeLoad = useCallback(() => {
+    sendCssToIframe();
+    setTimeout(sendCssToIframe, 300);
+    setTimeout(sendCssToIframe, 1000);
+  }, [sendCssToIframe]);
 
   const update = useCallback((key: keyof ThemeValues, value: string) => {
     setValues((prev) => ({ ...prev, [key]: value }));
