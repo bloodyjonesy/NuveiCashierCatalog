@@ -85,6 +85,34 @@ const VALUE_LABELS: Record<keyof ThemeValues, string> = {
   bodyMinWidth: "Body min width",
 };
 
+const VALUE_CSS_INFO: Record<keyof ThemeValues, { selector: string; property: string }> = {
+  pageBg:              { selector: ":root",                          property: "background" },
+  textColor:           { selector: ":root",                          property: "color" },
+  accentColor:         { selector: ".PMINFO a, .pm-hint a",          property: "color" },
+  cardBg:              { selector: ".pm_details_wrap .pminfo_wrap",   property: "background-color" },
+  headerBg:            { selector: ".lightbox-header",               property: "background" },
+  mutedColor:          { selector: "label, .label",                  property: "color" },
+  successColor:        { selector: ".valid input",                   property: "border-color" },
+  errorColor:          { selector: ".invalid input",                 property: "border-color" },
+  submitBg:            { selector: "#continueButton",                property: "background" },
+  submitText:          { selector: "#continueButton",                property: "color" },
+  submitRadius:        { selector: "#continueButton",                property: "border-radius" },
+  submitFontSize:      { selector: "#continueButton",                property: "font-size" },
+  inputBorderColor:    { selector: "input, .cSelect > div",          property: "border-color" },
+  inputTextColor:      { selector: "input, .cSelect > div",          property: "color" },
+  inputFontSize:       { selector: "input, .cSelect > div",          property: "font-size" },
+  inputBg:             { selector: "input, .cSelect > div",          property: "background" },
+  fontFamily:          { selector: ":root, body",                    property: "font-family" },
+  baseFontSize:        { selector: ":root",                          property: "font-size" },
+  lightboxBg:          { selector: "#lightbox, #lightbox_ws",        property: "background" },
+  lightboxHeaderBg:    { selector: ".lightbox-header",               property: "background" },
+  lightboxHeaderText:  { selector: ".lightbox-header h2",            property: "color" },
+  lightboxContentText: { selector: ".lightbox-content",              property: "color" },
+  bodyMaxWidth:        { selector: "body",                           property: "max-width" },
+  bodyPadding:         { selector: "body",                           property: "padding" },
+  bodyMinWidth:        { selector: "body",                           property: "min-width" },
+};
+
 /* ------------------------------------------------------------------ */
 /*  CSS generation from control values                                 */
 /* ------------------------------------------------------------------ */
@@ -123,8 +151,13 @@ body {
   opacity: .8;
 }
 
+/* Button / Link base */
+.btn, .payment_amount .suggested-points .spoint {
+  color: ${v.textColor};
+}
+
 /* Form inputs */
-input, .cSelect > div {
+input, .cSelect > div, .cSelect_read_only_text, .readOnlyText {
   border-color: ${v.inputBorderColor};
   color: ${v.inputTextColor};
   font-size: ${v.inputFontSize};
@@ -135,14 +168,27 @@ input:focus, .cSelect > div:focus {
   box-shadow: 0 .1rem 0 ${v.mutedColor};
 }
 
+input:disabled, input[readonly], .cSelect_read_only_text,
+.cSelect.select-disabled > div, #continueButton:disabled {
+  color: ${v.mutedColor};
+}
+
 /* Labels */
 label, .label {
   color: ${v.mutedColor};
 }
 
 /* Links */
-.PMINFO a, .pm-hint a, #lightbox a, #lightbox_ws a {
+.PMINFO a, .pm-hint a, #lightbox a, #lightbox_ws a,
+.blockUI h1 span,
+#lightbox.mvp_nuvei_card a.enter_card_detail,
+#lightbox.wd_mvp_nuvei_card a.enter_card_detail {
   color: ${v.accentColor};
+}
+
+/* PMINFO text */
+.PMINFO {
+  color: ${v.textColor};
 }
 
 /* Cards / Panels */
@@ -161,6 +207,29 @@ label, .label {
 [data-pms-type="vertical"] ul.pm-list > li.selected {
   border-color: ${v.accentColor};
   background: ${v.cardBg};
+}
+
+/* Bank selector */
+.ob_bank_id-widget [data-ob-bank] {
+  border-color: ${v.headerBg};
+}
+
+.ob_bank_id-widget [data-ob-bank].active {
+  border-color: ${v.accentColor};
+}
+
+/* Amount container */
+#pm_amount-container {
+  background-color: ${v.pageBg};
+}
+
+/* Amount validation */
+.amount_wrap .invalid .amount-container {
+  border-color: ${v.errorColor};
+}
+
+.amount_wrap .valid .amount-container {
+  border-color: ${v.successColor};
 }
 
 /* Lightbox / Modal */
@@ -184,12 +253,36 @@ label, .label {
   color: ${v.lightboxContentText};
 }
 
+.lightbox-content .hint {
+  color: ${v.lightboxContentText};
+}
+
+.lightbox-content .try_pm > div:hover {
+  background: ${v.headerBg};
+}
+
 /* Checkboxes / toggles */
 #allowSaveUpo:checked + label span,
 #sccToggle:checked + label span,
 .directFlowCheckbox:checked + label span {
   border-color: ${v.accentColor};
   background-color: ${v.accentColor};
+}
+
+/* Radio buttons */
+.c2p_card input[type="radio"] + label:before {
+  border-color: ${v.accentColor};
+}
+
+.c2p_card input[type="radio"]:checked + label:after {
+  background-color: ${v.accentColor};
+}
+
+/* C2P / Click-to-pay text */
+.c2p_card .text-container h3,
+.c2p_card .text-container p,
+.c2p-show-more-cards-btn {
+  color: ${v.textColor};
 }
 
 /* Success / Error / Validation */
@@ -201,12 +294,24 @@ label, .label {
   color: ${v.errorColor};
 }
 
-.valid input, .valid select, .valid .cSelect div {
+.valid input, .valid select, .valid .amount-container input, .valid .cSelect div {
   border-color: ${v.successColor};
 }
 
-.invalid input, .invalid select, .invalid .cSelect div {
+.valid input:focus, .valid .cSelect > div:focus {
+  box-shadow: 0 .1rem 0 ${v.successColor};
+}
+
+.invalid input, .invalid select, .invalid .amount-container input, .invalid .cSelect div {
   border-color: ${v.errorColor};
+}
+
+.invalid input:focus, .invalid .cSelect > div:focus {
+  box-shadow: 0 .1rem 0 ${v.errorColor};
+}
+
+.cSelect > div.unsuitable {
+  color: ${v.errorColor};
 }
 
 label.error {
@@ -217,11 +322,22 @@ label.error:before {
   border-bottom-color: ${v.errorColor};
 }
 
+/* Validation toggle tooltip */
+.row.toggleable_validation.validation_off .tooltip::before {
+  color: ${v.errorColor};
+}
+
+/* Field help icon */
+.row .field_help .tooltip_content {
+  color: ${v.mutedColor};
+}
+
 /* Scrollbar */
 .scrollable .iScrollIndicator {
   background: ${v.mutedColor};
 }
 
+.scrollable .iScrollLoneScrollbar,
 .iScrollVerticalScrollbar {
   background: ${v.headerBg};
 }
@@ -276,9 +392,58 @@ label.error:before {
   color: ${v.textColor};
 }
 
+/* Secure tooltip */
+.secure_tooltip_wrapper {
+  background: ${v.pageBg};
+}
+
+.secure_tooltip_wrapper:after {
+  border-top-color: ${v.pageBg};
+}
+
+/* Block UI overlay */
+.blockUI h1 {
+  color: ${v.textColor};
+}
+
+/* Target iframe */
+.targetIframeWrap {
+  color: ${v.textColor};
+}
+
+/* Pending states */
+#lightbox.pending .lightbox-header h2,
+#lightbox_ws.pending .lightbox-header h2,
+.pending .lightbox-header h2 {
+  color: ${v.lightboxHeaderText};
+}
+
+/* SCC popup */
+#lightbox.lbx_scc_popup .lightbox-content .scc-header {
+  border-bottom-color: ${v.mutedColor};
+  color: ${v.textColor};
+}
+
+#lightbox.lbx_scc_popup .lightbox-content .scc_popup_footer {
+  border-top-color: ${v.mutedColor};
+}
+
+/* Card arts / edit button */
+.row.cardArtsUrl .vco_edit .v-button,
+.row.cardArtsUrl .vco_edit .v-button:before {
+  color: ${v.mutedColor};
+}
+
+/* Phone number selects */
+.PMINFO .row.qiwi_phonenumber .cSelect > div.first_option,
+.PMINFO .row.composite_phone_wrap .cSelect > div.first_option,
+.PMINFO .row.muchBetter_mobilePhone .cSelect > div.first_option {
+  color: ${v.textColor};
+}
+
 /* Store CC details */
 #store-cc-details {
-  background: ${v.lightboxContentText === "#ffffff" ? "#FFFFFF" : "#FFFFFF"};
+  background: #FFFFFF;
   color: #808080;
 }`;
 }
@@ -900,10 +1065,11 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
                   size="sm"
                   className="h-7 text-xs gap-1"
                   onClick={() => {
-                    const lines = changedEntries.map(
-                      (e) => `${e.label}: ${e.from} → ${e.to}`
-                    );
-                    navigator.clipboard.writeText(lines.join("\n"));
+                    const lines = changedEntries.map((e) => {
+                      const info = VALUE_CSS_INFO[e.key];
+                      return `${e.label}\n  Selector: ${info.selector}\n  Property: ${info.property}\n  Old:      ${e.from}\n  New:      ${e.to}`;
+                    });
+                    navigator.clipboard.writeText(lines.join("\n\n"));
                   }}
                 >
                   <Copy className="h-3 w-3" />
@@ -911,27 +1077,45 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
                 </Button>
               )}
             </div>
-            <div className="px-4 py-3 max-h-[180px] overflow-y-auto">
+            <div className="px-4 py-3 max-h-[220px] overflow-y-auto">
               {changedEntries.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">
                   No changes yet — adjust values in the sidebar to see a summary here.
                 </p>
               ) : (
-                <div className="space-y-1.5">
-                  {changedEntries.map((e) => (
-                    <div key={e.key} className="flex items-center gap-2 text-xs">
-                      <span className="text-muted-foreground w-[180px] shrink-0 truncate">{e.label}</span>
-                      <span className="font-mono text-muted-foreground/70 line-through">{e.from}</span>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="font-mono font-medium">{e.to}</span>
-                      {e.to.match(/^#[0-9a-fA-F]{3,8}$/) && (
-                        <span
-                          className="inline-block h-3 w-3 rounded-full border border-border shrink-0"
-                          style={{ backgroundColor: e.to }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                <div className="space-y-3">
+                  {changedEntries.map((e) => {
+                    const info = VALUE_CSS_INFO[e.key];
+                    return (
+                      <div key={e.key} className="text-xs">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-medium">{e.label}</span>
+                          {e.to.match(/^#[0-9a-fA-F]{3,8}$/) && (
+                            <span
+                              className="inline-block h-3 w-3 rounded-full border border-border shrink-0"
+                              style={{ backgroundColor: e.to }}
+                            />
+                          )}
+                        </div>
+                        <div className="pl-3 space-y-0.5 text-muted-foreground">
+                          <div>
+                            <span className="text-muted-foreground/60 w-16 inline-block">Selector</span>
+                            <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">{info.selector}</code>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground/60 w-16 inline-block">Property</span>
+                            <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">{info.property}</code>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground/60 w-16 inline-block">Value</span>
+                            <code className="font-mono text-[10px] text-muted-foreground/70 line-through">{e.from}</code>
+                            <span>→</span>
+                            <code className="font-mono text-[10px] font-medium text-foreground">{e.to}</code>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
