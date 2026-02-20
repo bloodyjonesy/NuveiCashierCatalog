@@ -5,14 +5,39 @@ import {
   useDatabase,
   dbGetAllThemes,
   dbGetThemeById,
+  dbGetThemeByThemeId as dbGetThemeByThemeIdDb,
   dbCreateTheme,
   dbUpdateTheme,
   dbDeleteTheme,
+  dbGetSetting,
+  dbSetSetting,
 } from "./db";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const THEMES_FILE = path.join(DATA_DIR, "themes.json");
 const CUSTOMERS_FILE = path.join(DATA_DIR, "customers.json");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
+
+const DEFAULT_THEME_ID_KEY = "default_theme_id";
+
+type Settings = { default_theme_id?: string | null };
+
+function readSettings(): Settings {
+  ensureDataDir();
+  if (!fs.existsSync(SETTINGS_FILE)) return {};
+  try {
+    const raw = fs.readFileSync(SETTINGS_FILE, "utf8");
+    const data = JSON.parse(raw) as Settings;
+    return typeof data === "object" && data !== null ? data : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSettings(settings: Settings) {
+  ensureDataDir();
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf8");
+}
 
 export type { ThemeRecord, CustomerRecord };
 
@@ -69,6 +94,34 @@ export async function getAllThemes(): Promise<ThemeRecord[]> {
 export async function getThemeById(id: string): Promise<ThemeRecord | undefined> {
   if (useDatabase()) return dbGetThemeById(id);
   return readThemes().find((t) => t.id === id);
+}
+
+export async function getThemeByThemeId(themeId: string): Promise<ThemeRecord | undefined> {
+  if (useDatabase()) return dbGetThemeByThemeIdDb(themeId);
+  return readThemes().find((t) => t.theme_id === themeId);
+}
+
+export async function getDefaultThemeId(): Promise<string | null> {
+  if (useDatabase()) {
+    const v = await dbGetSetting(DEFAULT_THEME_ID_KEY);
+    return v && v.trim() ? v.trim() : null;
+  }
+  const v = readSettings().default_theme_id;
+  return v && String(v).trim() ? String(v).trim() : null;
+}
+
+export async function setDefaultThemeId(themeId: string | null): Promise<void> {
+  if (useDatabase()) {
+    await dbSetSetting(DEFAULT_THEME_ID_KEY, themeId ?? "");
+    return;
+  }
+  const s = readSettings();
+  if (themeId === null || themeId === "") {
+    delete s.default_theme_id;
+  } else {
+    s.default_theme_id = themeId;
+  }
+  writeSettings(s);
 }
 
 export async function createTheme(

@@ -62,6 +62,51 @@ export async function initThemesTable(): Promise<void> {
   await p.query(
     `ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS custom_css TEXT`
   );
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    )
+  `);
+}
+
+const SETTINGS_TABLE = "settings";
+
+export async function dbGetSetting(key: string): Promise<string | null> {
+  await ensureSchema();
+  const p = getPool();
+  const res = await p.query(`SELECT value FROM ${SETTINGS_TABLE} WHERE key = $1`, [key]);
+  const r = res.rows[0];
+  return r?.value ?? null;
+}
+
+export async function dbSetSetting(key: string, value: string): Promise<void> {
+  await ensureSchema();
+  const p = getPool();
+  await p.query(
+    `INSERT INTO ${SETTINGS_TABLE} (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2`,
+    [key, value]
+  );
+}
+
+export async function dbGetThemeByThemeId(themeId: string): Promise<ThemeRecord | undefined> {
+  await ensureSchema();
+  const p = getPool();
+  const res = await p.query(
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} WHERE theme_id = $1 LIMIT 1`,
+    [themeId]
+  );
+  const r = res.rows[0];
+  if (!r) return undefined;
+  return {
+    id: r.id,
+    theme_id: r.theme_id,
+    name: r.name,
+    screenshot_path: r.screenshot_path ?? null,
+    screenshot_base64: r.screenshot_base64 ?? null,
+    color_palette: parseColorPalette(r.color_palette),
+    custom_css: r.custom_css ?? null,
+  };
 }
 
 export async function dbGetAllThemes(): Promise<ThemeRecord[]> {

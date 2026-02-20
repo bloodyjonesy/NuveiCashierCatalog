@@ -27,34 +27,45 @@ export function ThemeCustomizer({ theme }: ThemeCustomizerProps) {
 
   const savedCss = theme.custom_css ?? "";
 
-  const [bodyBg, setBodyBg] = useState("#ffffff");
-  const [textColor, setTextColor] = useState("#1a1a1a");
-  const [linkColor, setLinkColor] = useState("#2563eb");
-  const [buttonBg, setButtonBg] = useState("#2563eb");
+  const [bodyBg, setBodyBg] = useState("#22243C");
+  const [textColor, setTextColor] = useState("#ffffff");
+  const [linkColor, setLinkColor] = useState("#6794FF");
+  const [buttonBg, setButtonBg] = useState("#6794FF");
   const [buttonText, setButtonText] = useState("#ffffff");
-  const [inputBorderColor, setInputBorderColor] = useState("#d1d5db");
+  const [inputBorderColor, setInputBorderColor] = useState("#7083AF");
+  const [boxShadowColor, setBoxShadowColor] = useState("#7083AF");
+  const [lightboxHeaderBg, setLightboxHeaderBg] = useState("#404064");
+  const [pminfoWrapBg, setPminfoWrapBg] = useState("#343457");
   const [borderWidth, setBorderWidth] = useState(1);
   const [borderStyle, setBorderStyle] = useState<"solid" | "dashed" | "none">("solid");
-  const [borderRadius, setBorderRadius] = useState(8);
+  const [borderRadius, setBorderRadius] = useState(4);
   const [fontFamily, setFontFamily] = useState("");
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState(10);
   const [fontWeight, setFontWeight] = useState<"400" | "500" | "600" | "700">("400");
-  const [padding, setPadding] = useState(16);
+  const [padding, setPadding] = useState(8);
   const [gap, setGap] = useState(8);
   const [customCss, setCustomCss] = useState(savedCss);
 
   const buildCss = useCallback(() => {
+    const borderRem = (borderWidth / 10).toFixed(1).replace(/\.0$/, "") || "0.1";
     const border =
       borderStyle === "none"
         ? "none"
-        : `${borderWidth}px ${borderStyle} ${inputBorderColor}`;
+        : `.${borderRem}rem ${borderStyle} ${inputBorderColor}`;
+    const radiusRem = (borderRadius / 10).toFixed(1).replace(/\.0$/, "") || "0.4";
+    const font = fontFamily ? `"${fontFamily.replace(/^"|"$/g, "")}", sans-serif` : '"Roboto", sans-serif';
     const lines: string[] = [
-      `body { background: ${bodyBg}; color: ${textColor}; font-family: ${fontFamily || "inherit"}; font-size: ${fontSize}px; font-weight: ${fontWeight}; padding: ${padding}px; }`,
+      `:root { --box-shadow-color: ${boxShadowColor}; font-size: ${fontSize}px; font-family: ${font}; background: ${bodyBg}; color: ${textColor}; }`,
+      `body { box-sizing: border-box; width: 100%; min-width: 30rem; padding: .5rem 1.5rem; font-family: ${font}; background: ${bodyBg}; color: ${textColor}; }`,
       `body * { box-sizing: border-box; }`,
-      `a { color: ${linkColor}; }`,
-      `button, .btn, input[type="submit"], [role="button"] { background: ${buttonBg}; color: ${buttonText}; border: ${border}; border-radius: ${borderRadius}px; padding: ${padding}px; font-size: ${fontSize}px; font-weight: ${fontWeight}; }`,
-      `input, select, textarea { border: ${border}; border-radius: ${borderRadius}px; padding: ${padding}px; font-size: ${fontSize}px; }`,
-      `.main-container, [class*="container"], [class*="wrapper"] { padding: ${padding}px; gap: ${gap}px; }`,
+      `a, .PMINFO a, .pm-hint a { color: ${linkColor}; }`,
+      `.submit, #continueButton { background: ${buttonBg}; color: ${buttonText}; border: none; border-radius: ${radiusRem}rem; padding: .7rem .5rem; font-size: 1.8rem; font-weight: 500; }`,
+      `input, .cSelect>div { border-width: 0; border-bottom-width: .1rem; border-bottom-style: solid; border-bottom-color: ${inputBorderColor}; border-radius: 0; padding: 0; padding-left: 0; height: 3rem; color: ${textColor}; font-size: 1.4rem; line-height: 3rem; background: transparent; }`,
+      `input:focus, .cSelect>div:focus { box-shadow: 0 .1rem 0 var(--box-shadow-color); }`,
+      `.lightbox-header { background: ${lightboxHeaderBg}; }`,
+      `.pm_details_wrap .pminfo_wrap { background-color: ${pminfoWrapBg}; border-radius: .4rem; padding: 2.6rem 1rem 1rem 1rem; }`,
+      `label, .label { color: ${inputBorderColor}; }`,
+      `.amount_wrap .amount-container { border-bottom: .1rem solid ${inputBorderColor}; }`,
     ];
     if (customCss.trim()) lines.push(customCss.trim());
     return lines.join("\n");
@@ -65,14 +76,15 @@ export function ThemeCustomizer({ theme }: ThemeCustomizerProps) {
     buttonBg,
     buttonText,
     inputBorderColor,
+    boxShadowColor,
+    lightboxHeaderBg,
+    pminfoWrapBg,
     borderWidth,
     borderStyle,
     borderRadius,
     fontFamily,
     fontSize,
     fontWeight,
-    padding,
-    gap,
     customCss,
   ]);
 
@@ -203,6 +215,21 @@ export function ThemeCustomizer({ theme }: ThemeCustomizerProps) {
               <Label className="w-28 text-xs">Input border</Label>
               <Input type="color" value={inputBorderColor} onChange={(e) => setInputBorderColor(e.target.value)} className="h-9 w-16 p-1" />
               <Input value={inputBorderColor} onChange={(e) => setInputBorderColor(e.target.value)} className="h-9 flex-1 font-mono text-xs" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="w-28 text-xs">Box shadow / focus</Label>
+              <Input type="color" value={boxShadowColor} onChange={(e) => setBoxShadowColor(e.target.value)} className="h-9 w-16 p-1" />
+              <Input value={boxShadowColor} onChange={(e) => setBoxShadowColor(e.target.value)} className="h-9 flex-1 font-mono text-xs" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="w-28 text-xs">Lightbox header</Label>
+              <Input type="color" value={lightboxHeaderBg} onChange={(e) => setLightboxHeaderBg(e.target.value)} className="h-9 w-16 p-1" />
+              <Input value={lightboxHeaderBg} onChange={(e) => setLightboxHeaderBg(e.target.value)} className="h-9 flex-1 font-mono text-xs" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="w-28 text-xs">PM details panel</Label>
+              <Input type="color" value={pminfoWrapBg} onChange={(e) => setPminfoWrapBg(e.target.value)} className="h-9 w-16 p-1" />
+              <Input value={pminfoWrapBg} onChange={(e) => setPminfoWrapBg(e.target.value)} className="h-9 flex-1 font-mono text-xs" />
             </div>
           </CardContent>
         </Card>

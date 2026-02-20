@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { CredentialsProvider } from "@/components/credentials-provider";
 import { useAdmin } from "@/contexts/admin-context";
 import { useTheme } from "@/contexts/theme-context";
-import { LayoutDashboard, PlusCircle, ExternalLink, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, PlusCircle, ExternalLink, Sun, Moon, Palette } from "lucide-react";
 
 const navCatalog = { href: "/", label: "Catalog", icon: LayoutDashboard };
+const navCustomize = { href: "/customize", label: "Customize", icon: Palette };
 const navAdmin = [
   { href: "/add", label: "Add theme", icon: PlusCircle },
   { href: "/test", label: "Test link", icon: ExternalLink },
@@ -35,6 +36,16 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <navCatalog.icon className="h-4 w-4" />
                 {navCatalog.label}
+              </Button>
+            </Link>
+            <Link href={navCustomize.href}>
+              <Button
+                variant={pathname === navCustomize.href ? "secondary" : "ghost"}
+                size="sm"
+                className="gap-2"
+              >
+                <navCustomize.icon className="h-4 w-4" />
+                {navCustomize.label}
               </Button>
             </Link>
             {isAdmin &&
