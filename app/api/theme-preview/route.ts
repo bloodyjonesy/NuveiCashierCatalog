@@ -40,22 +40,7 @@ const INJECTED_SCRIPT = `
 })();
 `;
 
-export async function POST(request: NextRequest) {
-  let url: string;
-  try {
-    const body = await request.json();
-    url = typeof body.url === "string" ? body.url.trim() : "";
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  if (!url || !isAllowedUrl(url)) {
-    return NextResponse.json(
-      { error: "Missing or disallowed url (only Nuvei hosted pages allowed)" },
-      { status: 400 }
-    );
-  }
-
+async function fetchAndInject(url: string): Promise<NextResponse> {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "NuveiCashierCatalog/1.0" },
@@ -95,4 +80,36 @@ export async function POST(request: NextRequest) {
       { status: 502 }
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  const url = request.nextUrl.searchParams.get("url")?.trim() ?? "";
+
+  if (!url || !isAllowedUrl(url)) {
+    return NextResponse.json(
+      { error: "Missing or disallowed url" },
+      { status: 400 }
+    );
+  }
+
+  return fetchAndInject(url);
+}
+
+export async function POST(request: NextRequest) {
+  let url: string;
+  try {
+    const body = await request.json();
+    url = typeof body.url === "string" ? body.url.trim() : "";
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (!url || !isAllowedUrl(url)) {
+    return NextResponse.json(
+      { error: "Missing or disallowed url (only Nuvei hosted pages allowed)" },
+      { status: 400 }
+    );
+  }
+
+  return fetchAndInject(url);
 }

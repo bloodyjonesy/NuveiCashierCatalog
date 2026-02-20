@@ -442,12 +442,11 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
   const [values, setValues] = useState<ThemeValues>(initialValues);
   const [showRawCss, setShowRawCss] = useState(false);
   const [rawCssOverride, setRawCssOverride] = useState("");
-  const [proxyHtml, setProxyHtml] = useState<string | null>(null);
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<"saved" | "error" | null>(null);
-  const [previewLoaded, setPreviewLoaded] = useState(false);
 
   const generatedCss = useMemo(() => buildCssFromValues(values), [values]);
 
@@ -483,18 +482,10 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to get URL");
 
-      const proxyRes = await fetch("/api/theme-preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: data.url }),
-      });
-      if (!proxyRes.ok) {
-        const err = await proxyRes.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to load preview");
-      }
-      const html = await proxyRes.text();
-      setProxyHtml(html);
-      setPreviewLoaded(true);
+      const hostedUrl = data.url as string;
+      setIframeUrl(
+        "/api/theme-preview?url=" + encodeURIComponent(hostedUrl)
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -791,13 +782,13 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
               </div>
             )}
 
-            {proxyHtml ? (
+            {iframeUrl ? (
               <iframe
                 ref={iframeRef}
-                srcDoc={proxyHtml}
+                src={iframeUrl}
                 title="Payment page preview"
                 className="w-full h-full min-h-[400px] border-0"
-                sandbox="allow-same-origin allow-scripts allow-forms"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                 onLoad={handleIframeLoad}
               />
             ) : !error ? (
