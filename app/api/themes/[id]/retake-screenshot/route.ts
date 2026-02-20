@@ -36,11 +36,23 @@ export async function POST(
 
   try {
     const { base64, publicPath } = await captureScreenshot(url);
+    console.log("[retake-screenshot] themeId=" + id, {
+      base64Length: base64?.length ?? 0,
+      hasPublicPath: !!publicPath,
+    });
     const color_palette = base64 ? await extractPaletteFromBase64(base64) : [];
+    console.log("[retake-screenshot] palette result", {
+      paletteLength: color_palette?.length ?? 0,
+      palette: color_palette,
+    });
     const updated = await updateTheme(id, {
       screenshot_base64: base64,
       screenshot_path: publicPath ?? null,
       color_palette: color_palette.length > 0 ? color_palette : null,
+    });
+    console.log("[retake-screenshot] updateTheme result", {
+      updated: !!updated,
+      updatedPaletteLength: updated?.color_palette?.length ?? 0,
     });
     if (!updated) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

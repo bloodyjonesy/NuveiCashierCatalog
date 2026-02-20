@@ -27,28 +27,67 @@ function buildPixelArray(data: Buffer, width: number, height: number): [number, 
 }
 
 export async function extractPaletteFromBase64(base64Image: string): Promise<string[]> {
-  if (!base64Image?.trim()) return [];
+  const log = (msg: string, ...args: unknown[]) =>
+    console.log("[color-palette]", msg, ...args);
+
+  if (!base64Image?.trim()) {
+    log("skip: empty base64Image");
+    return [];
+  }
   const normalized = base64Image.replace(/^data:image\/\w+;base64,/, "").trim();
-  if (!normalized) return [];
+  if (!normalized) {
+    log("skip: normalized empty");
+    return [];
+  }
   try {
     const buffer = Buffer.from(normalized, "base64");
-    if (buffer.length === 0) return [];
+    log("step 1: buffer length", buffer.length, "firstBytes", buffer.slice(0, 8).toString("hex"));
+    if (buffer.length === 0) {
+      log("skip: buffer empty");
+      return [];
+    }
 
     const PNG = require("pngjs").PNG;
     const png = PNG.sync.read(buffer);
-    if (!png?.data || !png.width || !png.height) return [];
+    const hasData = !!(png?.data && png.width && png.height);
+    log("step 2: PNG read", {
+      hasPng: !!png,
+      width: png?.width,
+      height: png?.height,
+      dataLength: png?.data?.length,
+      hasData,
+    });
+    if (!hasData) {
+      log("skip: invalid png (missing data/width/height)");
+      return [];
+    }
 
     const pixelArray = buildPixelArray(png.data, png.width, png.height);
-    if (pixelArray.length < 2) return [];
+    log("step 3: pixelArray length", pixelArray.length);
+    if (pixelArray.length < 2) {
+      log("skip: pixelArray too small (need at least 2)");
+      return [];
+    }
 
     const quantize = require("@lokesh.dhakar/quantize");
     const cmap = quantize(pixelArray, COLOR_COUNT);
-    if (!cmap) return [];
+    log("step 4: quantize result", { hasCmap: !!cmap });
+    if (!cmap) {
+      log("skip: quantize returned falsy");
+      return [];
+    }
 
     const palette = cmap.palette();
-    if (!Array.isArray(palette)) return [];
+    const isArray = Array.isArray(palette);
+    log("step 5: palette", { isArray, length: palette?.length });
+    if (!isArray) {
+      log("skip: palette not array");
+      return [];
+    }
 
-    return palette.map(([r, g, b]: number[]) => rgbToHex(r, g, b));
+    const hexColors = palette.map(([r, g, b]: number[]) => rgbToHex(r, g, b));
+    log("step 6: done", hexColors);
+    return hexColors;
   } catch (err) {
     console.error("[color-palette] extractPaletteFromBase64 failed:", err);
     return [];

@@ -35,6 +35,9 @@ export function CatalogGrid() {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     if (deletingId) return;
+    const theme = themes.find((t) => t.id === id);
+    const name = theme?.name ?? "this theme";
+    if (!window.confirm(`Delete “${name}”? This cannot be undone.`)) return;
     setDeletingId(id);
     try {
       const res = await fetch(`/api/themes/${id}`, { method: "DELETE" });

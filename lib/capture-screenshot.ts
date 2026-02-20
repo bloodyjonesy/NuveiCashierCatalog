@@ -33,15 +33,23 @@ export async function captureScreenshot(url: string): Promise<{
   await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
   await page.waitForTimeout(2000);
 
-  ensureThemesDir();
+  // Get screenshot as buffer first so we always have base64 (works when public/ is read-only e.g. Railway)
+  const buffer = await page.screenshot({ fullPage: false });
+  const base64 = Buffer.isBuffer(buffer) ? buffer.toString("base64") : "";
+  let publicPath: string | undefined;
   const filename = safeFilename();
   const filePath = path.join(THEMES_DIR, filename);
-  await page.screenshot({ path: filePath, fullPage: false });
-  const publicPath = `/themes/${filename}`;
-  let base64 = "";
-  if (fs.existsSync(filePath)) {
-    base64 = fs.readFileSync(filePath, { encoding: "base64" });
+  try {
+    ensureThemesDir();
+    fs.writeFileSync(filePath, buffer);
+    publicPath = `/themes/${filename}`;
+  } catch (writeErr) {
+    console.warn("[capture-screenshot] could not write file (read-only fs?):", writeErr);
   }
+  console.log("[capture-screenshot] bufferLength=" + (Buffer.isBuffer(buffer) ? buffer.length : 0), {
+    base64Length: base64.length,
+    publicPath: publicPath ?? null,
+  });
   await browser.close();
   return { base64, path: filePath, publicPath };
 }
