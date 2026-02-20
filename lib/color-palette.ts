@@ -1,9 +1,31 @@
 /**
  * Extract a small color palette from a screenshot (base64). Pure JS implementation
- * using pngjs + quantize so it works in Docker/Railway without sharp native bindings.
+ * using pngjs + inline quantize so it works in Docker/Railway without external deps or bundling issues.
  */
 const COLOR_COUNT = 5;
 const QUALITY = 10; // sample every Nth pixel
+
+/** Inline simple quantize: bucket colors, take top N by frequency. No external package = no bundle issues. */
+function quantizePalette(pixels: [number, number, number][], maxColors: number): [number, number, number][] {
+  if (pixels.length === 0 || maxColors < 1) return [];
+  const BITS = 4; // 4 bits per channel => 16^3 buckets
+  const shift = 8 - BITS;
+  const bucket = (r: number, g: number, b: number) =>
+    (r >> shift) * 256 * 256 + (g >> shift) * 256 + (b >> shift);
+  const sum: Record<number, { n: number; r: number; g: number; b: number }> = {};
+  for (const [r, g, b] of pixels) {
+    const key = bucket(r, g, b);
+    if (!sum[key]) sum[key] = { n: 0, r: 0, g: 0, b: 0 };
+    sum[key].n++;
+    sum[key].r += r;
+    sum[key].g += g;
+    sum[key].b += b;
+  }
+  const byCount = Object.entries(sum)
+    .map(([, v]) => ({ n: v.n, r: Math.round(v.r / v.n), g: Math.round(v.g / v.n), b: Math.round(v.b / v.n) }))
+    .sort((a, b) => b.n - a.n);
+  return byCount.slice(0, maxColors).map((c) => [c.r, c.g, c.b] as [number, number, number]);
+}
 
 export type PaletteDebug = {
   step: string;
@@ -89,17 +111,15 @@ export async function extractPaletteFromBase64(
       return [];
     }
 
-    const quantize = require("@lokesh.dhakar/quantize");
-    const cmap = quantize(pixelArray, COLOR_COUNT);
-    push({ step: "quantize", hasCmap: !!cmap });
-    if (!cmap) return [];
+    const palette = quantizePalette(pixelArray, COLOR_COUNT);
+    push({ step: "quantize", hasCmap: palette.length > 0 });
+    if (palette.length === 0) return [];
 
-    const palette = cmap.palette();
     const isArray = Array.isArray(palette);
-    push({ step: "palette", paletteLength: palette?.length, error: isArray ? undefined : "not array" });
+    push({ step: "palette", paletteLength: palette.length, error: isArray ? undefined : "not array" });
     if (!isArray) return [];
 
-    const hexColors = palette.map(([r, g, b]: number[]) => rgbToHex(r, g, b));
+    const hexColors = palette.map(([r, g, b]) => rgbToHex(r, g, b));
     push({ step: "done", palette: hexColors });
     return hexColors;
   } catch (err) {
