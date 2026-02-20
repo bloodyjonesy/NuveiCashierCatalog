@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const NUVEI_ORIGIN =
-  (process.env.NUVEI_PPP_BASE_URL ?? process.env.NEXT_PUBLIC_NUVEI_PPP_BASE_URL ?? "https://ppp-test.safecharge.com/ppp/purchase.do")
-    .replace(/\/ppp\/purchase\.do.*/, "");
+  (
+    process.env.NUVEI_PPP_BASE_URL ??
+    process.env.NEXT_PUBLIC_NUVEI_PPP_BASE_URL ??
+    "https://ppp-test.safecharge.com/ppp/purchase.do"
+  ).replace(/\/ppp\/purchase\.do.*/, "");
 
 const SKIP_REQ_HEADERS = new Set([
   "host",
@@ -24,6 +27,8 @@ async function proxyToNuvei(request: NextRequest, path: string) {
   const target = `${NUVEI_ORIGIN}/${path}`;
   const url = new URL(target);
   request.nextUrl.searchParams.forEach((v, k) => url.searchParams.append(k, v));
+
+  console.log(`[nuvei-proxy] ${request.method} /${path} → ${url.toString()}`);
 
   const headers: Record<string, string> = {};
   request.headers.forEach((value, key) => {
@@ -47,24 +52,34 @@ async function proxyToNuvei(request: NextRequest, path: string) {
     }
   }
 
-  const upstream = await fetch(url.toString(), init);
+  try {
+    const upstream = await fetch(url.toString(), init);
 
-  const resHeaders = new Headers();
-  upstream.headers.forEach((value, key) => {
-    if (!SKIP_RES_HEADERS.has(key.toLowerCase())) {
-      resHeaders.set(key, value);
-    }
-  });
-  resHeaders.set("Access-Control-Allow-Origin", "*");
-  resHeaders.delete("content-security-policy");
-  resHeaders.delete("x-frame-options");
+    console.log(`[nuvei-proxy] /${path} → ${upstream.status} (${upstream.headers.get("content-type") ?? "?"})`);
 
-  const body = await upstream.arrayBuffer();
-  return new NextResponse(body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: resHeaders,
-  });
+    const resHeaders = new Headers();
+    upstream.headers.forEach((value, key) => {
+      if (!SKIP_RES_HEADERS.has(key.toLowerCase())) {
+        resHeaders.set(key, value);
+      }
+    });
+    resHeaders.set("Access-Control-Allow-Origin", "*");
+    resHeaders.delete("content-security-policy");
+    resHeaders.delete("x-frame-options");
+
+    const body = await upstream.arrayBuffer();
+    return new NextResponse(body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: resHeaders,
+    });
+  } catch (e) {
+    console.error(`[nuvei-proxy] /${path} fetch error:`, e);
+    return NextResponse.json(
+      { error: "Proxy fetch failed" },
+      { status: 502 }
+    );
+  }
 }
 
 export async function GET(

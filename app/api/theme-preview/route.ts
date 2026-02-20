@@ -21,16 +21,29 @@ function stripCspMeta(html: string): string {
   );
 }
 
-function buildHeadInjection(nuveiOrigin: string): string {
+/**
+ * Rewrite root-absolute URLs in HTML attributes so they go through our proxy.
+ * e.g. href="/ppp/css/style.css" → href="/api/nuvei-proxy/ppp/css/style.css"
+ */
+function rewriteAbsoluteUrls(html: string): string {
+  return html
+    .replace(/(\shref=["'])\/(?!\/|api\/)/g, (_, pre) => `${pre}/api/nuvei-proxy/`)
+    .replace(/(\ssrc=["'])\/(?!\/|api\/)/g, (_, pre) => `${pre}/api/nuvei-proxy/`)
+    .replace(/(\saction=["'])\/(?!\/|api\/)/g, (_, pre) => `${pre}/api/nuvei-proxy/`);
+}
+
+function buildHeadInjection(nuveiOrigin: string, basePath: string): string {
+  const proxyBase = `/api/nuvei-proxy${basePath}`;
   return `
 <!-- == NUVEI CUSTOMIZER INJECTION START == -->
-<base href="/api/nuvei-proxy/" target="_self" />
+<base href="${proxyBase}" target="_self" />
 <style id="live-custom-css"></style>
 <script>
 (function() {
   console.log('[nuvei-customizer] Injected script running in <head>');
+  console.log('[nuvei-customizer] base href =', document.querySelector('base')?.href);
 
-  // 1. CSS live-edit listener — runs immediately so postMessage works ASAP
+  // 1. CSS live-edit listener
   var styleEl = document.getElementById('live-custom-css');
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -44,7 +57,7 @@ function buildHeadInjection(nuveiOrigin: string): string {
     }
   });
 
-  // 2. Intercept fetch() — route relative and Nuvei-absolute URLs through our proxy
+  // 2. Intercept fetch() — route Nuvei-absolute and root-absolute URLs through proxy
   var NUVEI = '${nuveiOrigin}';
   var PROXY = '/api/nuvei-proxy';
   var _fetch = window.fetch;
@@ -52,37 +65,63 @@ function buildHeadInjection(nuveiOrigin: string): string {
     if (typeof input === 'string') {
       if (input.startsWith(NUVEI)) {
         input = PROXY + input.substring(NUVEI.length);
+        console.log('[nuvei-customizer] fetch rewrite (abs):', input);
       } else if (input.startsWith('/') && !input.startsWith('/api/')) {
         input = PROXY + input;
+        console.log('[nuvei-customizer] fetch rewrite (root):', input);
       }
     } else if (input instanceof Request) {
       var u = input.url;
-      var rewritten = null;
       if (u.startsWith(NUVEI)) {
-        rewritten = PROXY + u.substring(NUVEI.length);
-      }
-      if (rewritten) {
-        input = new Request(rewritten, input);
+        input = new Request(PROXY + u.substring(NUVEI.length), input);
       }
     }
     return _fetch.call(this, input, init);
   };
 
-  // 3. Intercept XMLHttpRequest.open — same rewriting
+  // 3. Intercept XMLHttpRequest.open
   var _open = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function() {
     var url = arguments[1];
     if (typeof url === 'string') {
       if (url.startsWith(NUVEI)) {
         arguments[1] = PROXY + url.substring(NUVEI.length);
+        console.log('[nuvei-customizer] XHR rewrite (abs):', arguments[1]);
       } else if (url.startsWith('/') && !url.startsWith('/api/')) {
         arguments[1] = PROXY + url;
+        console.log('[nuvei-customizer] XHR rewrite (root):', arguments[1]);
       }
     }
     return _open.apply(this, arguments);
   };
 
-  console.log('[nuvei-customizer] fetch/XHR interceptors installed, proxying to', PROXY);
+  // 4. Intercept jQuery $.ajax if loaded later
+  var _jqHook = false;
+  function hookJquery() {
+    if (_jqHook || !window.jQuery) return;
+    _jqHook = true;
+    jQuery.ajaxPrefilter(function(options) {
+      if (options.url) {
+        if (options.url.startsWith(NUVEI)) {
+          options.url = PROXY + options.url.substring(NUVEI.length);
+        } else if (options.url.startsWith('/') && !options.url.startsWith('/api/')) {
+          options.url = PROXY + options.url;
+        } else if (!options.url.startsWith('http') && !options.url.startsWith('/')) {
+          // relative URL — jQuery resolves relative to page, but <base> should handle it
+          // nothing to do
+        }
+        console.log('[nuvei-customizer] jQuery ajax url:', options.url);
+      }
+    });
+    console.log('[nuvei-customizer] jQuery ajaxPrefilter installed');
+  }
+  // Try immediately + on DOM ready + poll briefly
+  hookJquery();
+  document.addEventListener('DOMContentLoaded', hookJquery);
+  var jqPoll = setInterval(function() { hookJquery(); if (_jqHook) clearInterval(jqPoll); }, 50);
+  setTimeout(function() { clearInterval(jqPoll); }, 5000);
+
+  console.log('[nuvei-customizer] Interceptors installed, NUVEI=' + NUVEI + ', PROXY=' + PROXY);
 })();
 </script>
 <!-- == NUVEI CUSTOMIZER INJECTION END == -->
@@ -117,14 +156,17 @@ async function fetchAndInject(url: string): Promise<NextResponse> {
     const finalUrl = res.url || url;
     const parsed = new URL(finalUrl);
     const nuveiOrigin = parsed.origin;
+    const basePath = parsed.pathname.replace(/\/[^/]*$/, "/");
 
     console.log("[theme-preview] Final URL after redirects:", finalUrl);
     console.log("[theme-preview] Nuvei origin:", nuveiOrigin);
+    console.log("[theme-preview] Base path:", basePath);
     console.log("[theme-preview] HTML length:", html.length);
 
     html = stripCspMeta(html);
+    html = rewriteAbsoluteUrls(html);
 
-    const injection = buildHeadInjection(nuveiOrigin);
+    const injection = buildHeadInjection(nuveiOrigin, basePath);
 
     if (html.includes("<head>")) {
       html = html.replace("<head>", "<head>" + injection);
