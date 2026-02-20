@@ -455,8 +455,14 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
     : generatedCss;
 
   const sendCssToIframe = useCallback(() => {
-    const win = iframeRef.current?.contentWindow;
-    if (win) win.postMessage({ type: "custom-css", css: finalCss }, "*");
+    const iframe = iframeRef.current;
+    const win = iframe?.contentWindow;
+    if (!win) {
+      console.warn("[customizer] sendCss: no iframe contentWindow");
+      return;
+    }
+    console.log("[customizer] sendCss: posting CSS to iframe, length=", finalCss.length);
+    win.postMessage({ type: "custom-css", css: finalCss }, "*");
   }, [finalCss]);
 
   useEffect(() => {
@@ -467,6 +473,7 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
     setError(null);
     setLoading(true);
     try {
+      console.log("[customizer] loadPreview: fetching hosted URL for theme", themeId);
       const res = await fetch("/api/hosted-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -483,10 +490,12 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
       if (!res.ok) throw new Error(data.error || "Failed to get URL");
 
       const hostedUrl = data.url as string;
-      setIframeUrl(
-        "/api/theme-preview?url=" + encodeURIComponent(hostedUrl)
-      );
+      const proxyUrl = "/api/theme-preview?url=" + encodeURIComponent(hostedUrl);
+      console.log("[customizer] loadPreview: hostedUrl=", hostedUrl);
+      console.log("[customizer] loadPreview: proxyUrl=", proxyUrl);
+      setIframeUrl(proxyUrl);
     } catch (e) {
+      console.error("[customizer] loadPreview error:", e);
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
@@ -498,9 +507,11 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
   }, [loadPreview]);
 
   const handleIframeLoad = useCallback(() => {
+    console.log("[customizer] iframe onLoad fired");
     sendCssToIframe();
-    setTimeout(sendCssToIframe, 300);
-    setTimeout(sendCssToIframe, 1000);
+    setTimeout(sendCssToIframe, 500);
+    setTimeout(sendCssToIframe, 1500);
+    setTimeout(sendCssToIframe, 3000);
   }, [sendCssToIframe]);
 
   const update = useCallback((key: keyof ThemeValues, value: string) => {
