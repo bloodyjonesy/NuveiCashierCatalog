@@ -28,7 +28,7 @@ export function CatalogGrid() {
   const filteredThemes =
     colorFilter.length === 0
       ? themes
-      : themes.filter((t) => colorFilter.some((c) => themeHasColor(t, c)));
+      : themes.filter((t) => colorFilter.every((c) => themeHasColor(t, c)));
 
   const toggleColorFilter = (name: string) => {
     setColorFilter((prev) =>
