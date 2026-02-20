@@ -5,7 +5,7 @@ export default async function CustomizePage() {
   const defaultThemeId = await getDefaultThemeId();
   const theme =
     defaultThemeId != null
-      ? await getThemeByThemeId(defaultThemeId)
+      ? (await getThemeByThemeId(defaultThemeId)) ?? null
       : null;
 
   return (
