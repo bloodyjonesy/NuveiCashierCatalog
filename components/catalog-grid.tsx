@@ -20,23 +20,20 @@ export function CatalogGrid() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [colorFilter, setColorFilter] = useState<Set<string>>(new Set());
+  const [colorFilter, setColorFilter] = useState<string[]>([]);
 
   const themeHasColor = (theme: ThemeRecord, colorName: string) =>
     theme.color_palette?.some((hex) => getColorName(hex) === colorName) ?? false;
 
   const filteredThemes =
-    colorFilter.size === 0
+    colorFilter.length === 0
       ? themes
-      : themes.filter((t) => [...colorFilter].some((c) => themeHasColor(t, c)));
+      : themes.filter((t) => colorFilter.some((c) => themeHasColor(t, c)));
 
   const toggleColorFilter = (name: string) => {
-    setColorFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
+    setColorFilter((prev) =>
+      prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]
+    );
   };
 
   const loadThemes = () => {
@@ -150,7 +147,7 @@ export function CatalogGrid() {
             >
               <input
                 type="checkbox"
-                checked={colorFilter.has(name)}
+                checked={colorFilter.includes(name)}
                 onChange={() => toggleColorFilter(name)}
                 className="h-4 w-4 rounded border-border"
               />
@@ -158,18 +155,18 @@ export function CatalogGrid() {
             </label>
           ))}
         </div>
-        {colorFilter.size > 0 && (
+        {colorFilter.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setColorFilter(new Set())}
+            onClick={() => setColorFilter([])}
             className="text-muted-foreground"
           >
             Clear
           </Button>
         )}
       </div>
-      {filteredThemes.length === 0 && colorFilter.size > 0 ? (
+      {filteredThemes.length === 0 && colorFilter.length > 0 ? (
         <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
           No themes match the selected colors. Try different filters or clear to see all.
         </div>
