@@ -13,7 +13,7 @@ import type { ThemeRecord } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 
 type Props = {
-  defaultThemeId: string | null;
+  defaultThemeId: string;
   theme: ThemeRecord | null;
 };
 
@@ -23,7 +23,7 @@ export function CustomizePageClient({
 }: Props) {
   const router = useRouter();
   const { isAdmin } = useAdmin();
-  const [themeIdInput, setThemeIdInput] = useState(defaultThemeId ?? "");
+  const [themeIdInput, setThemeIdInput] = useState(defaultThemeId);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<"saved" | "error" | null>(null);
 
@@ -46,77 +46,6 @@ export function CustomizePageClient({
       setSaving(false);
     }
   }, [themeIdInput, router]);
-
-  if (defaultThemeId == null || defaultThemeId === "") {
-    if (!isAdmin) {
-      return (
-        <div>
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            </Link>
-          </div>
-          <Card>
-            <CardHeader>
-              <h1 className="text-xl font-semibold">Customize default theme</h1>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                No default theme is set. An admin can set the default theme ID in
-                settings to customize it here.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-    return (
-      <div>
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-semibold">Customize default theme</h1>
-        </div>
-        <Card className="max-w-lg">
-          <CardHeader>
-            <h2 className="text-lg font-medium">Set default theme ID</h2>
-            <p className="text-sm text-muted-foreground">
-              Enter the Nuvei theme_id of the default theme to customize (e.g. 223482).
-              Only this theme can be customized from this page.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="default-theme-id">Default theme ID</Label>
-              <Input
-                id="default-theme-id"
-                value={themeIdInput}
-                onChange={(e) => setThemeIdInput(e.target.value)}
-                placeholder="e.g. 223482"
-                className="font-mono"
-              />
-            </div>
-            <Button onClick={saveDefaultThemeId} disabled={saving}>
-              {saving ? "Saving…" : "Save and open customizer"}
-            </Button>
-            {message === "saved" && (
-              <p className="text-sm text-green-600">Saved. Reloading…</p>
-            )}
-            {message === "error" && (
-              <p className="text-sm text-destructive">Failed to save.</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (theme == null) {
     return (

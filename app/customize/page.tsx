@@ -3,10 +3,7 @@ import { CustomizePageClient } from "@/components/customize-page-client";
 
 export default async function CustomizePage() {
   const defaultThemeId = await getDefaultThemeId();
-  const theme =
-    defaultThemeId != null
-      ? (await getThemeByThemeId(defaultThemeId)) ?? null
-      : null;
+  const theme = (await getThemeByThemeId(defaultThemeId)) ?? null;
 
   return (
     <CustomizePageClient

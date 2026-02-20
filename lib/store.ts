@@ -19,6 +19,8 @@ const CUSTOMERS_FILE = path.join(DATA_DIR, "customers.json");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
 const DEFAULT_THEME_ID_KEY = "default_theme_id";
+/** Hardcoded default theme ID when no setting is stored. */
+const FALLBACK_DEFAULT_THEME_ID = "223482";
 
 type Settings = { default_theme_id?: string | null };
 
@@ -101,13 +103,13 @@ export async function getThemeByThemeId(themeId: string): Promise<ThemeRecord | 
   return readThemes().find((t) => t.theme_id === themeId);
 }
 
-export async function getDefaultThemeId(): Promise<string | null> {
+export async function getDefaultThemeId(): Promise<string> {
   if (useDatabase()) {
     const v = await dbGetSetting(DEFAULT_THEME_ID_KEY);
-    return v && v.trim() ? v.trim() : null;
+    return (v && v.trim()) ? v.trim() : FALLBACK_DEFAULT_THEME_ID;
   }
   const v = readSettings().default_theme_id;
-  return v && String(v).trim() ? String(v).trim() : null;
+  return (v && String(v).trim()) ? String(v).trim() : FALLBACK_DEFAULT_THEME_ID;
 }
 
 export async function setDefaultThemeId(themeId: string | null): Promise<void> {
