@@ -271,7 +271,7 @@ export function CatalogGrid() {
             <Link href={`/theme/${theme.id}`} className="flex-1 min-w-0">
               <Button variant="secondary" size="sm" className="w-full gap-2">
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                View & test
+                View & Test
               </Button>
             </Link>
             {isAdmin && renamingId !== theme.id && (

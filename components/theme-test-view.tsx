@@ -12,11 +12,20 @@ import {
 import { buildHostedUrlClient } from "@/lib/nuvei-client";
 import type { ThemeRecord, CustomerRecord } from "@/lib/types";
 
+function generateRandomUserTokenId(): string {
+  const part = typeof crypto !== "undefined" && crypto.getRandomValues
+    ? Array.from(crypto.getRandomValues(new Uint8Array(8)))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+    : Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  return `user_${part}@test.local`;
+}
+
 export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   const [useDemo] = useState(getUseDemo());
   const creds = getStoredCredentials();
   const [customerMode, setCustomerMode] = useState<"new" | "returning">("new");
-  const [newUserTokenId, setNewUserTokenId] = useState("newuser@test.com");
+  const [newUserTokenId, setNewUserTokenId] = useState(generateRandomUserTokenId);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
@@ -81,7 +90,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
   }, [loadCustomers]);
 
   const getUserTokenId = (): string => {
-    if (customerMode === "new") return newUserTokenId.trim() || "newuser@test.com";
+    if (customerMode === "new") return newUserTokenId.trim() || generateRandomUserTokenId();
     const c = customers.find((x) => x.id === selectedCustomerId);
     return c ? c.user_token_id : newUserTokenId;
   };
@@ -161,7 +170,7 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-medium">View & test</h2>
+          <h2 className="text-lg font-medium">View & Test</h2>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-4">
