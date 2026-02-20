@@ -98,9 +98,19 @@ export async function getThemeById(id: string): Promise<ThemeRecord | undefined>
   return readThemes().find((t) => t.id === id);
 }
 
+function normalizeThemeId(value: unknown): string {
+  if (value == null) return "";
+  const s = String(value).trim();
+  return s;
+}
+
 export async function getThemeByThemeId(themeId: string): Promise<ThemeRecord | undefined> {
-  if (useDatabase()) return dbGetThemeByThemeIdDb(themeId);
-  return readThemes().find((t) => t.theme_id === themeId);
+  const needle = normalizeThemeId(themeId);
+  if (!needle) return undefined;
+  if (useDatabase()) return dbGetThemeByThemeIdDb(needle);
+  return readThemes().find(
+    (t) => normalizeThemeId(t.theme_id) === needle
+  );
 }
 
 export async function getDefaultThemeId(): Promise<string> {

@@ -91,10 +91,12 @@ export async function dbSetSetting(key: string, value: string): Promise<void> {
 
 export async function dbGetThemeByThemeId(themeId: string): Promise<ThemeRecord | undefined> {
   await ensureSchema();
+  const needle = themeId.trim();
+  if (!needle) return undefined;
   const p = getPool();
   const res = await p.query(
-    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} WHERE theme_id = $1 LIMIT 1`,
-    [themeId]
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} WHERE TRIM(theme_id) = $1 LIMIT 1`,
+    [needle]
   );
   const r = res.rows[0];
   if (!r) return undefined;
