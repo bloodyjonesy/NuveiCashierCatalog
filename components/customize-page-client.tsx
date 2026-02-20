@@ -255,6 +255,22 @@ label.error:before {
 }`;
 }
 
+/**
+ * Post-process CSS to add !important to every declaration value.
+ * This ensures our overrides win against the Nuvei page's own stylesheets
+ * regardless of specificity or cascade order.
+ */
+function addImportant(css: string): string {
+  return css.replace(
+    /:\s*([^;}{!]+)\s*;/g,
+    (match, value) => {
+      const trimmed = value.trim();
+      if (trimmed.includes("!important")) return match;
+      return `: ${trimmed} !important;`;
+    }
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Collapsible section                                                */
 /* ------------------------------------------------------------------ */
@@ -448,10 +464,10 @@ export function CustomizePageClient({ themeId, initialCss }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<"saved" | "error" | null>(null);
 
-  const generatedCss = useMemo(() => buildCssFromValues(values), [values]);
+  const generatedCss = useMemo(() => addImportant(buildCssFromValues(values)), [values]);
 
   const finalCss = showRawCss && rawCssOverride.trim()
-    ? generatedCss + "\n\n/* Raw CSS overrides */\n" + rawCssOverride
+    ? generatedCss + "\n\n/* Raw CSS overrides */\n" + addImportant(rawCssOverride)
     : generatedCss;
 
   const sendCssToIframe = useCallback(() => {

@@ -50,10 +50,31 @@ function buildHeadInjection(nuveiOrigin: string, basePath: string): string {
     styleEl.id = 'live-custom-css';
     (document.head || document.documentElement).appendChild(styleEl);
   }
+
+  // Move style element to end of body once DOM is ready (cascade wins)
+  function moveStyleToEnd() {
+    var target = document.body || document.documentElement;
+    if (styleEl.parentNode !== target || styleEl.nextSibling) {
+      target.appendChild(styleEl);
+      console.log('[nuvei-customizer] Moved style element to end of', target.tagName);
+    }
+  }
+  if (document.body) {
+    moveStyleToEnd();
+  }
+  document.addEventListener('DOMContentLoaded', moveStyleToEnd);
+  // Also re-append after a delay in case Nuvei JS adds more stylesheets
+  setTimeout(moveStyleToEnd, 1000);
+  setTimeout(moveStyleToEnd, 3000);
+
   window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'custom-css' && typeof e.data.css === 'string') {
+      moveStyleToEnd();
       styleEl.textContent = e.data.css;
-      console.log('[nuvei-customizer] CSS updated, length=' + e.data.css.length);
+      var hasImportant = e.data.css.indexOf('!important') !== -1;
+      console.log('[nuvei-customizer] CSS updated, length=' + e.data.css.length + ', has !important=' + hasImportant);
+      console.log('[nuvei-customizer] Style element in DOM:', !!styleEl.parentNode, 'parent:', styleEl.parentNode?.tagName);
+      console.log('[nuvei-customizer] First 200 chars:', e.data.css.substring(0, 200));
     }
   });
 
