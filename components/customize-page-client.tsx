@@ -223,6 +223,35 @@ label, .label {
   background-color: ${v.pageBg};
 }
 
+/* Amount wrap: default border and labels */
+.amount_wrap .amount-container {
+  border-bottom-color: ${v.mutedColor};
+}
+
+.label_open_amount_range,
+.withdraw-limit-text {
+  color: ${v.mutedColor};
+}
+
+.amount_wrap .revert_currency,
+.amount_wrap .revert_currency:before {
+  color: ${v.mutedColor};
+}
+
+.pt_currency_exchange_wrapper .converted-amount-text {
+  color: ${v.mutedColor};
+}
+
+/* Fixed amount display area and label */
+.fixed_amount .amount_container_wrap {
+  background-color: ${v.headerBg};
+}
+
+.fixed-amount-label,
+.wd_fixed_amount .fixed-amount-label {
+  color: ${v.mutedColor};
+}
+
 /* Amount validation */
 .amount_wrap .invalid .amount-container {
   border-color: ${v.errorColor};
@@ -230,6 +259,122 @@ label, .label {
 
 .amount_wrap .valid .amount-container {
   border-color: ${v.successColor};
+}
+
+/* Left column: payment method list header */
+[data-pms-type="vertical"] .payment_header {
+  background-color: ${v.pageBg};
+  color: ${v.textColor};
+  border-bottom-color: ${v.headerBg};
+}
+
+/* Payment list group indicator bar */
+[data-pms-type="vertical"] ul.pm-list > li[data-group]::before {
+  background-color: ${v.cardBg};
+}
+
+[data-pms-type="vertical"] ul.pm-list > li[data-group].selected::before {
+  background-color: ${v.accentColor};
+}
+
+/* Apple Pay / wallet block in left column */
+[data-pms-type="vertical"] .apple_pay_wrapp {
+  background-color: ${v.pageBg};
+  color: ${v.mutedColor};
+}
+
+[data-pms-type="vertical"] .apple_pay_wrapp .or_separator {
+  color: ${v.headerBg};
+  background-color: ${v.pageBg};
+}
+
+[data-pms-type="vertical"] .apple_pay_wrapp .or_separator:after {
+  background-color: ${v.headerBg};
+}
+
+[data-pms-type="vertical"] .apple_pay_wrapp .btn_container {
+  background-color: ${v.cardBg};
+  border-color: ${v.cardBg};
+}
+
+[data-pms-type="vertical"] .apple_pay_wrapp .apple.selected .btn_container {
+  border-color: ${v.accentColor};
+  color: ${v.textColor};
+}
+
+[data-pms-type="vertical"] .apple_pay_wrapp .other .text {
+  color: ${v.textColor};
+}
+
+/* Back button in header */
+.head #back_btn_wrapper a {
+  color: ${v.textColor};
+}
+
+/* Dropdown select options */
+.cSelect > select > option {
+  background: ${v.cardBg};
+  color: ${v.textColor};
+}
+
+/* Card arts / custom card image row */
+.row.cardArtsUrl {
+  background-color: ${v.headerBg};
+}
+
+/* Remove saved PM button */
+.removeUPM {
+  background-color: ${v.headerBg};
+  color: ${v.accentColor};
+}
+
+/* Merchant name / address */
+#merchent_name_and_address_container {
+  color: ${v.mutedColor};
+}
+
+/* Withdraw / payout section */
+.withdraw-wrapper table tr {
+  border-bottom-color: ${v.headerBg};
+}
+
+.withdraw-wrapper table tr:first-child {
+  border-top-color: ${v.headerBg};
+}
+
+.withdraw-wrapper .wd_upo_name {
+  color: ${v.mutedColor};
+}
+
+.no_pending_withdrawals {
+  color: ${v.mutedColor};
+}
+
+/* Scan card CTA */
+.scan_text {
+  color: ${v.mutedColor};
+}
+
+.cta_scan_card {
+  border-color: ${v.accentColor};
+  color: ${v.accentColor};
+}
+
+/* Registration / lightbox details panel */
+#lightbox.registration .details,
+#lightbox_ws.registration .details {
+  background: ${v.headerBg};
+}
+
+/* Lightbox try_pm borders */
+#lightbox .lightbox-content .try_pm,
+#lightbox_ws .lightbox-content .try_pm {
+  border-bottom-color: ${v.headerBg};
+}
+
+#lightbox .lightbox-content .try_pm > div,
+#lightbox_ws .lightbox-content .try_pm > div {
+  border-top-color: ${v.headerBg};
 }
 
 /* Lightbox / Modal */
@@ -262,6 +407,14 @@ label, .label {
 }
 
 /* Checkboxes / toggles */
+#allowSaveUpo + label,
+#sccToggle + label,
+#paypalDirectFlow + label,
+.directFlowCheckbox + label,
+#skrillDirectFlow + label {
+  color: ${v.textColor};
+}
+
 #allowSaveUpo:checked + label span,
 #sccToggle:checked + label span,
 .directFlowCheckbox:checked + label span {
