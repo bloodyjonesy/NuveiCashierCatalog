@@ -13,11 +13,13 @@ import {
   setStoredCredentials,
 } from "@/lib/credentials";
 import { buildHostedUrlClient } from "@/lib/nuvei-client";
+import type { ThemeDeviceType } from "@/lib/types";
 
 export function AddThemeForm() {
   const router = useRouter();
   const [themeId, setThemeId] = useState("");
   const [name, setName] = useState("");
+  const [deviceType, setDeviceType] = useState<ThemeDeviceType>("desktop");
   const [useDemo, setUseDemoState] = useState(getUseDemo());
   const [merchantId, setMerchantId] = useState(getStoredCredentials().merchant_id);
   const [siteId, setSiteId] = useState(getStoredCredentials().merchant_site_id);
@@ -99,7 +101,7 @@ export function AddThemeForm() {
       const screenshotRes = await fetch("/api/screenshot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: iframeUrl }),
+        body: JSON.stringify({ url: iframeUrl, device_type: deviceType }),
       });
       const screenshotData = await screenshotRes.json();
       if (!screenshotRes.ok) throw new Error(screenshotData.error || "Screenshot failed");
@@ -110,6 +112,7 @@ export function AddThemeForm() {
         body: JSON.stringify({
           theme_id: themeId.trim(),
           name: name.trim(),
+          device_type: deviceType,
           screenshot_path: screenshotData.path ?? null,
           screenshot_base64: screenshotData.base64 ?? null,
         }),
@@ -152,6 +155,34 @@ export function AddThemeForm() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Dark checkout"
               />
+            </div>
+            <div className="space-y-2 min-w-[180px]">
+              <Label>Device type</Label>
+              <div className="flex gap-4 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="device_type"
+                    checked={deviceType === "desktop"}
+                    onChange={() => setDeviceType("desktop")}
+                    className="rounded-full border-input"
+                  />
+                  <span className="text-sm">Desktop</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="device_type"
+                    checked={deviceType === "mobile"}
+                    onChange={() => setDeviceType("mobile")}
+                    className="rounded-full border-input"
+                  />
+                  <span className="text-sm">Mobile</span>
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {deviceType === "mobile" ? "Preview and thumbnail will use mobile dimensions (375×667)." : "Preview and thumbnail will use desktop dimensions."}
+              </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <input
@@ -237,13 +268,21 @@ export function AddThemeForm() {
         </CardHeader>
         <CardContent>
           {iframeUrl ? (
-            <div className="w-full overflow-hidden rounded-md border bg-muted aspect-video max-h-[70vh]">
-              <iframe
-                src={iframeUrl}
-                title="Nuvei hosted page preview"
-                className="w-full h-full min-h-[360px] border-0"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-              />
+            <div className={deviceType === "mobile" ? "flex justify-center" : "w-full"}>
+              <div
+                className={
+                  deviceType === "mobile"
+                    ? "w-[375px] overflow-hidden rounded-md border bg-muted shadow-lg min-h-[500px] max-h-[70vh] aspect-[375/667]"
+                    : "w-full overflow-hidden rounded-md border bg-muted aspect-video max-h-[70vh]"
+                }
+              >
+                <iframe
+                  src={iframeUrl}
+                  title="Nuvei hosted page preview"
+                  className={`w-full h-full border-0 ${deviceType === "mobile" ? "min-h-[667px]" : "min-h-[360px]"}`}
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                />
+              </div>
             </div>
           ) : (
             <div className="w-full aspect-video max-h-[50vh] rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm bg-muted/30">

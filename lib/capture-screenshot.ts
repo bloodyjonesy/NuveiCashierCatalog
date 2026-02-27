@@ -13,23 +13,32 @@ function safeFilename(): string {
   return `screenshot-${Date.now()}-${Math.random().toString(36).slice(2, 10)}.png`;
 }
 
-const VIEWPORT = { width: 1600, height: 1000 };
+const DESKTOP_VIEWPORT = { width: 1600, height: 1000 };
+/** Standard mobile resolution (e.g. iPhone SE / small phone) */
+const MOBILE_VIEWPORT = { width: 375, height: 667 };
+
+export type ScreenshotDeviceType = "desktop" | "mobile";
 
 /**
  * Capture a screenshot of the given URL. Optionally write to public/themes and return public path.
+ * Use device_type to capture at desktop (1600×1000) or mobile (375×667) viewport.
  */
-export async function captureScreenshot(url: string): Promise<{
+export async function captureScreenshot(
+  url: string,
+  device_type: ScreenshotDeviceType = "desktop"
+): Promise<{
   base64: string;
   path?: string;
   publicPath?: string;
 }> {
+  const viewport = device_type === "mobile" ? MOBILE_VIEWPORT : DESKTOP_VIEWPORT;
   const { chromium } = await import("playwright");
   const browser = await chromium.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
-  await page.setViewportSize(VIEWPORT);
+  await page.setViewportSize(viewport);
   await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
   await page.waitForTimeout(2000);
 

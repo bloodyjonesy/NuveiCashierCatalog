@@ -36,7 +36,7 @@ export async function POST(
 
   const debugSteps: PaletteDebug[] = [];
   try {
-    const { base64, publicPath } = await captureScreenshot(url);
+    const { base64, publicPath } = await captureScreenshot(url, theme.device_type);
     console.log("[retake-screenshot] themeId=" + id, {
       base64Length: base64?.length ?? 0,
       hasPublicPath: !!publicPath,

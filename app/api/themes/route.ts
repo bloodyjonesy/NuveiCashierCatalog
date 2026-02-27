@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const theme_id = typeof body.theme_id === "string" ? body.theme_id : "";
   const name = typeof body.name === "string" ? body.name : "";
+  const device_type =
+    body.device_type === "mobile" ? "mobile" : "desktop";
   const screenshot_path =
     typeof body.screenshot_path === "string" ? body.screenshot_path : null;
   const screenshot_base64 =
@@ -40,6 +42,7 @@ export async function POST(request: NextRequest) {
     const theme = await createTheme({
       theme_id: theme_id.trim(),
       name: name.trim(),
+      device_type,
       screenshot_path,
       screenshot_base64,
       ...(color_palette != null && color_palette.length > 0 ? { color_palette } : {}),

@@ -3,7 +3,7 @@
  * Table: theme_id, name, screenshot_path (link), screenshot_base64 (optional thumbnail).
  */
 import { Pool } from "pg";
-import type { ThemeRecord } from "./types";
+import type { ThemeRecord, ThemeDeviceType } from "./types";
 
 let pool: Pool | null = null;
 let schemaInited = false;
@@ -44,6 +44,8 @@ async function ensureSchema(): Promise<void> {
 
 const TABLE = "themes";
 
+const DEFAULT_DEVICE_TYPE: ThemeDeviceType = "desktop";
+
 export async function initThemesTable(): Promise<void> {
   const p = getPool();
   await p.query(`
@@ -61,6 +63,9 @@ export async function initThemesTable(): Promise<void> {
   );
   await p.query(
     `ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS custom_css TEXT`
+  );
+  await p.query(
+    `ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS device_type TEXT`
   );
   await p.query(`
     CREATE TABLE IF NOT EXISTS settings (
@@ -95,37 +100,21 @@ export async function dbGetThemeByThemeId(themeId: string): Promise<ThemeRecord 
   if (!needle) return undefined;
   const p = getPool();
   const res = await p.query(
-    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} WHERE TRIM(theme_id) = $1 LIMIT 1`,
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css, device_type FROM ${TABLE} WHERE TRIM(theme_id) = $1 LIMIT 1`,
     [needle]
   );
   const r = res.rows[0];
   if (!r) return undefined;
-  return {
-    id: r.id,
-    theme_id: r.theme_id,
-    name: r.name,
-    screenshot_path: r.screenshot_path ?? null,
-    screenshot_base64: r.screenshot_base64 ?? null,
-    color_palette: parseColorPalette(r.color_palette),
-    custom_css: r.custom_css ?? null,
-  };
+  return rowToTheme(r);
 }
 
 export async function dbGetAllThemes(): Promise<ThemeRecord[]> {
   await ensureSchema();
   const p = getPool();
   const res = await p.query(
-    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} ORDER BY name`
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css, device_type FROM ${TABLE} ORDER BY device_type, name`
   );
-  return res.rows.map((r) => ({
-    id: r.id,
-    theme_id: r.theme_id,
-    name: r.name,
-    screenshot_path: r.screenshot_path ?? null,
-    screenshot_base64: r.screenshot_base64 ?? null,
-    color_palette: parseColorPalette(r.color_palette),
-    custom_css: r.custom_css ?? null,
-  }));
+  return res.rows.map((r) => rowToTheme(r));
 }
 
 function parseColorPalette(raw: unknown): string[] | null {
@@ -138,24 +127,34 @@ function parseColorPalette(raw: unknown): string[] | null {
   }
 }
 
+function parseDeviceType(raw: unknown): ThemeDeviceType {
+  if (raw === "mobile") return "mobile";
+  return "desktop";
+}
+
+function rowToTheme(r: Record<string, unknown>): ThemeRecord {
+  return {
+    id: r.id as string,
+    theme_id: r.theme_id as string,
+    name: r.name as string,
+    device_type: parseDeviceType(r.device_type),
+    screenshot_path: (r.screenshot_path as string) ?? null,
+    screenshot_base64: (r.screenshot_base64 as string) ?? null,
+    color_palette: parseColorPalette(r.color_palette),
+    custom_css: (r.custom_css as string) ?? null,
+  };
+}
+
 export async function dbGetThemeById(id: string): Promise<ThemeRecord | undefined> {
   await ensureSchema();
   const p = getPool();
   const res = await p.query(
-    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css FROM ${TABLE} WHERE id = $1`,
+    `SELECT id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css, device_type FROM ${TABLE} WHERE id = $1`,
     [id]
   );
   const r = res.rows[0];
   if (!r) return undefined;
-  return {
-    id: r.id,
-    theme_id: r.theme_id,
-    name: r.name,
-    screenshot_path: r.screenshot_path ?? null,
-    screenshot_base64: r.screenshot_base64 ?? null,
-    color_palette: parseColorPalette(r.color_palette),
-    custom_css: r.custom_css ?? null,
-  };
+  return rowToTheme(r);
 }
 
 export async function dbCreateTheme(
@@ -163,9 +162,10 @@ export async function dbCreateTheme(
 ): Promise<ThemeRecord> {
   await ensureSchema();
   const id = input.id ?? generateId();
+  const device_type = input.device_type ?? DEFAULT_DEVICE_TYPE;
   const p = getPool();
   await p.query(
-    `INSERT INTO ${TABLE} (id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    `INSERT INTO ${TABLE} (id, theme_id, name, screenshot_path, screenshot_base64, color_palette, custom_css, device_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       id,
       input.theme_id,
@@ -174,12 +174,14 @@ export async function dbCreateTheme(
       input.screenshot_base64 ?? null,
       input.color_palette != null ? JSON.stringify(input.color_palette) : null,
       input.custom_css ?? null,
+      device_type,
     ]
   );
   return {
     id,
     theme_id: input.theme_id,
     name: input.name,
+    device_type,
     screenshot_path: input.screenshot_path ?? null,
     screenshot_base64: input.screenshot_base64 ?? null,
     color_palette: input.color_palette ?? null,
@@ -189,7 +191,7 @@ export async function dbCreateTheme(
 
 export async function dbUpdateTheme(
   id: string,
-  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette" | "custom_css">>
+  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette" | "custom_css" | "device_type">>
 ): Promise<ThemeRecord | undefined> {
   await ensureSchema();
   const current = await dbGetThemeById(id);
@@ -197,7 +199,7 @@ export async function dbUpdateTheme(
   const merged = { ...current, ...updates };
   const p = getPool();
   await p.query(
-    `UPDATE ${TABLE} SET theme_id = $1, name = $2, screenshot_path = $3, screenshot_base64 = $4, color_palette = $5, custom_css = $6 WHERE id = $7`,
+    `UPDATE ${TABLE} SET theme_id = $1, name = $2, screenshot_path = $3, screenshot_base64 = $4, color_palette = $5, custom_css = $6, device_type = $7 WHERE id = $8`,
     [
       merged.theme_id,
       merged.name,
@@ -205,6 +207,7 @@ export async function dbUpdateTheme(
       merged.screenshot_base64 ?? null,
       merged.color_palette != null ? JSON.stringify(merged.color_palette) : null,
       merged.custom_css ?? null,
+      merged.device_type,
       id,
     ]
   );

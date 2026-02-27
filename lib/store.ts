@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
-import type { ThemeRecord, CustomerRecord } from "./types";
+import type { ThemeRecord, CustomerRecord, ThemeDeviceType } from "./types";
+
+const DEFAULT_DEVICE_TYPE: ThemeDeviceType = "desktop";
 import {
   useDatabase,
   dbGetAllThemes,
@@ -50,13 +52,21 @@ function ensureDataDir() {
   }
 }
 
+function normalizeTheme(r: ThemeRecord & { device_type?: ThemeDeviceType | null }): ThemeRecord {
+  return {
+    ...r,
+    device_type: r.device_type === "mobile" ? "mobile" : "desktop",
+  };
+}
+
 function readThemes(): ThemeRecord[] {
   ensureDataDir();
   if (!fs.existsSync(THEMES_FILE)) return [];
   try {
     const raw = fs.readFileSync(THEMES_FILE, "utf8");
     const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
+    const arr = Array.isArray(data) ? data : [];
+    return arr.map((t: ThemeRecord & { device_type?: ThemeDeviceType | null }) => normalizeTheme(t));
   } catch {
     return [];
   }
@@ -165,6 +175,7 @@ export async function createTheme(
     id: input.id ?? generateId(),
     theme_id: input.theme_id,
     name: input.name,
+    device_type: input.device_type ?? DEFAULT_DEVICE_TYPE,
     screenshot_path: input.screenshot_path ?? null,
     screenshot_base64: input.screenshot_base64 ?? null,
     color_palette: input.color_palette ?? null,
@@ -177,7 +188,7 @@ export async function createTheme(
 
 export async function updateTheme(
   id: string,
-  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette" | "custom_css">>
+  updates: Partial<Pick<ThemeRecord, "name" | "theme_id" | "screenshot_path" | "screenshot_base64" | "color_palette" | "custom_css" | "device_type">>
 ): Promise<ThemeRecord | undefined> {
   if (useDatabase()) return dbUpdateTheme(id, updates);
   const themes = readThemes();

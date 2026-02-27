@@ -3,14 +3,14 @@ import { buildHostedUrlNode, buildNuveiParams } from "@/lib/nuvei-params";
 import { captureScreenshot } from "@/lib/capture-screenshot";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as { url?: string; useDemo?: boolean; theme_id?: string; device_type?: string };
   let url: string | null = null;
 
   const isNuveiUrl =
     typeof body.url === "string" &&
     (body.url.startsWith("https://secure.nuvei.com/") ||
       body.url.startsWith("https://ppp-test.safecharge.com/"));
-  if (isNuveiUrl) {
+  if (isNuveiUrl && typeof body.url === "string") {
     url = body.url;
   } else if (body.useDemo === true && typeof body.theme_id === "string") {
     const merchantId = (process.env.NUVEI_MERCHANT_ID ?? "").trim().replace(/\r?\n/g, "");
@@ -40,8 +40,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const device_type = body.device_type === "mobile" ? "mobile" : "desktop";
+
   try {
-    const { base64, publicPath } = await captureScreenshot(url);
+    const { base64, publicPath } = await captureScreenshot(url, device_type);
     return NextResponse.json({ path: publicPath ?? null, base64 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

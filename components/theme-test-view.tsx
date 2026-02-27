@@ -314,19 +314,35 @@ export function ThemeTestView({ theme }: { theme: ThemeRecord }) {
       <Card>
         <CardHeader>
           <h2 className="text-lg font-medium">Preview</h2>
+          {theme.device_type === "mobile" && (
+            <p className="text-sm text-muted-foreground">Mobile theme — shown at 375×667 viewport</p>
+          )}
         </CardHeader>
         <CardContent>
           {iframeUrl ? (
-            <div className="w-full overflow-hidden rounded-md border bg-muted aspect-video max-h-[70vh]">
-              <iframe
-                src={iframeUrl}
-                title="Nuvei payment page"
-                className="w-full h-full min-h-[360px] border-0"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-              />
-            </div>
+            theme.device_type === "mobile" ? (
+              <div className="flex justify-center">
+                <div className="w-[375px] overflow-hidden rounded-md border bg-muted shadow-lg min-h-[500px] max-h-[70vh] aspect-[375/667]">
+                  <iframe
+                    src={iframeUrl}
+                    title="Nuvei payment page"
+                    className="w-full h-full min-h-[667px] border-0"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="w-full overflow-hidden rounded-md border bg-muted aspect-video max-h-[70vh]">
+                <iframe
+                  src={iframeUrl}
+                  title="Nuvei payment page"
+                  className="w-full h-full min-h-[360px] border-0"
+                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                />
+              </div>
+            )
           ) : (
-            <div className="w-full aspect-video max-h-[50vh] rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm bg-muted/30">
+            <div className={`rounded-md border border-dashed flex items-center justify-center text-muted-foreground text-sm bg-muted/30 ${theme.device_type === "mobile" ? "w-[375px] aspect-[375/667] min-h-[400px] mx-auto" : "w-full aspect-video max-h-[50vh]"}`}>
               Click &quot;Open payment page&quot; to load the hosted page
             </div>
           )}

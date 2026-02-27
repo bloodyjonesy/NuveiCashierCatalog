@@ -1,7 +1,11 @@
+export type ThemeDeviceType = "desktop" | "mobile";
+
 export type ThemeRecord = {
   id: string;
   theme_id: string;
   name: string;
+  /** desktop = desktop-optimized theme; mobile = mobile-optimized theme */
+  device_type: ThemeDeviceType;
   screenshot_path: string | null;
   /** Base64 PNG for catalog thumbnail (persists on Railway where public/themes is ephemeral) */
   screenshot_base64?: string | null;
