@@ -1,39 +1,77 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { CredentialsProvider } from "@/components/credentials-provider";
 import { useAdmin } from "@/contexts/admin-context";
 import { useTheme } from "@/contexts/theme-context";
-import { LayoutDashboard, PlusCircle, ExternalLink, Sun, Moon, Palette } from "lucide-react";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  ExternalLink,
+  Sun,
+  Moon,
+  Palette,
+  ChevronDown,
+  ChevronRight,
+  LogIn,
+  LogOut,
+  Monitor,
+  Smartphone,
+} from "lucide-react";
+import { checkAdminPassword } from "@/lib/credentials";
+import type { ThemeRecord } from "@/lib/types";
 
 const navCatalog = { href: "/", label: "Catalog", icon: LayoutDashboard };
-const navCustomize = { href: "/customize", label: "Customize", icon: Palette };
-const navAdmin = [
-  { href: "/add", label: "Add theme", icon: PlusCircle },
-  { href: "/test", label: "Test link", icon: ExternalLink },
-];
+const DOCS_URL = "https://docs.nuvei.com";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, setAdmin } = useAdmin();
   const { theme, setTheme } = useTheme();
+  const [themes, setThemes] = useState<ThemeRecord[]>([]);
+  const [desktopOpen, setDesktopOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/themes")
+      .then((r) => r.json())
+      .then((data) => setThemes(Array.isArray(data) ? data : []))
+      .catch(() => setThemes([]));
+  }, []);
+
+  const desktopThemes = themes.filter((t) => t.device_type !== "mobile");
+  const mobileThemes = themes.filter((t) => t.device_type === "mobile");
+
+  const handleAdminLogin = () => {
+    const password = window.prompt("Admin password");
+    if (password !== null && checkAdminPassword(password)) {
+      setAdmin(true);
+    } else if (password !== null) {
+      window.alert("Incorrect password");
+    }
+  };
+
+  const handleExitAdmin = () => {
+    setAdmin(false);
+  };
+
+  const adminNav = [
+    { href: "/add", label: "Add theme", icon: PlusCircle },
+    { href: "/test", label: "Test link", icon: ExternalLink },
+    { href: "/customize", label: "Customize", icon: Palette },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Nuvei docs–style top header: dark bar + logo */}
+      {/* Header: logo text + Catalog + Back to Nuvei Docs + theme toggle */}
       <header className="sticky top-0 z-50 border-b border-docs-header-border bg-docs-header text-docs-header-text shrink-0">
         <div className="flex h-14 items-center px-4 lg:px-6">
-          <Link href="/" className="flex items-center gap-3 shrink-0 mr-8">
-            <Image
-              src="/nuvei-themes-logo.png"
-              alt="Nuvei THEMES"
-              width={140}
-              height={32}
-              className="h-8 w-auto object-contain"
-              priority
-            />
+          <Link
+            href="/"
+            className="shrink-0 mr-8 font-semibold text-lg text-white hover:text-white/90 transition-colors"
+          >
+            Nuvei Themes
           </Link>
           <nav className="flex items-center gap-1 text-sm flex-wrap">
             <Link
@@ -46,32 +84,16 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             >
               {navCatalog.label}
             </Link>
-            <Link
-              href={navCustomize.href}
-              className={`px-3 py-2 rounded-md font-medium transition-colors ${
-                pathname === navCustomize.href
-                  ? "bg-white/10 text-white"
-                  : "text-docs-header-text/85 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              {navCustomize.label}
-            </Link>
-            {isAdmin &&
-              navAdmin.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`px-3 py-2 rounded-md font-medium transition-colors ${
-                    pathname === href
-                      ? "bg-white/10 text-white"
-                      : "text-docs-header-text/85 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
+            <a
+              href={DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-docs-header-text/90 hover:text-white transition-colors"
+            >
+              Back to Nuvei Docs
+            </a>
             <button
               type="button"
               className="p-2 rounded-md text-docs-header-text/85 hover:bg-white/10 hover:text-white transition-colors"
@@ -81,17 +103,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            <div className="[&_button]:text-docs-header-text [&_button]:hover:bg-white/10 [&_button]:hover:text-white">
-              <CredentialsProvider />
-            </div>
           </div>
         </div>
       </header>
 
-      {/* Docs-style layout: sidebar + main content */}
       <div className="flex-1 flex min-h-0">
-        <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-docs-sidebar-border bg-docs-sidebar py-4">
-          <nav className="px-3 space-y-0.5">
+        <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-docs-sidebar-border bg-docs-sidebar">
+          <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
             <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Theme Catalog
             </div>
@@ -106,23 +124,91 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               <LayoutDashboard className="h-4 w-4 shrink-0" />
               {navCatalog.label}
             </Link>
-            <Link
-              href={navCustomize.href}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === navCustomize.href
-                  ? "bg-docs-sidebar-active text-docs-sidebar-active-text"
-                  : "text-foreground hover:bg-muted"
-              }`}
-            >
-              <Palette className="h-4 w-4 shrink-0" />
-              {navCustomize.label}
-            </Link>
+
+            {/* Desktop themes dropdown */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setDesktopOpen(!desktopOpen)}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
+              >
+                <Monitor className="h-4 w-4 shrink-0" />
+                <span className="flex-1">Desktop</span>
+                {desktopOpen ? (
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0" />
+                )}
+              </button>
+              {desktopOpen && (
+                <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-docs-sidebar-border pl-3 py-1">
+                  {desktopThemes.length === 0 ? (
+                    <li className="text-xs text-muted-foreground py-1">No desktop themes</li>
+                  ) : (
+                    desktopThemes.map((t) => (
+                      <li key={t.id}>
+                        <Link
+                          href={`/theme/${t.id}`}
+                          className={`block py-1.5 px-2 rounded text-sm transition-colors ${
+                            pathname === `/theme/${t.id}`
+                              ? "bg-docs-sidebar-active text-docs-sidebar-active-text font-medium"
+                              : "text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {t.name}
+                        </Link>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
+
+            {/* Mobile themes dropdown */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
+              >
+                <Smartphone className="h-4 w-4 shrink-0" />
+                <span className="flex-1">Mobile</span>
+                {mobileOpen ? (
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0" />
+                )}
+              </button>
+              {mobileOpen && (
+                <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-docs-sidebar-border pl-3 py-1">
+                  {mobileThemes.length === 0 ? (
+                    <li className="text-xs text-muted-foreground py-1">No mobile themes</li>
+                  ) : (
+                    mobileThemes.map((t) => (
+                      <li key={t.id}>
+                        <Link
+                          href={`/theme/${t.id}`}
+                          className={`block py-1.5 px-2 rounded text-sm transition-colors ${
+                            pathname === `/theme/${t.id}`
+                              ? "bg-docs-sidebar-active text-docs-sidebar-active-text font-medium"
+                              : "text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {t.name}
+                        </Link>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
+
             {isAdmin && (
               <>
                 <div className="px-3 py-1.5 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Admin
                 </div>
-                {navAdmin.map(({ href, label, icon: Icon }) => (
+                {adminNav.map(({ href, label, icon: Icon }) => (
                   <Link
                     key={href}
                     href={href}
@@ -139,6 +225,29 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               </>
             )}
           </nav>
+
+          {/* Bottom: Admin login or Exit admin */}
+          <div className="p-3 border-t border-docs-sidebar-border">
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={handleExitAdmin}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                Exit admin
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <LogIn className="h-4 w-4 shrink-0" />
+                Admin login
+              </button>
+            )}
+          </div>
         </aside>
 
         <main className="flex-1 min-w-0 overflow-auto">
