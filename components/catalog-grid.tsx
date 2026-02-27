@@ -178,7 +178,7 @@ export function CatalogGrid() {
       {desktopThemes.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-muted-foreground">Desktop themes</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {desktopThemes.map((theme) => (
         <Card
           key={theme.id}
@@ -274,11 +274,11 @@ export function CatalogGrid() {
               )}
             </CardContent>
           </Link>
-          <CardFooter className="p-4 pt-0 flex flex-wrap gap-2">
+          <CardFooter className="p-4 pt-0 flex flex-wrap gap-2 items-center">
             <Link href={`/theme/${theme.id}`} className="flex-1 min-w-0">
-              <Button variant="secondary" size="sm" className="w-full gap-2">
+              <Button variant="secondary" size="sm" className="w-full gap-2 min-w-0" title="View & Test">
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                View & Test
+                <span className="hidden sm:inline truncate">View & Test</span>
               </Button>
             </Link>
             {isAdmin && renamingId !== theme.id && (
@@ -322,7 +322,7 @@ export function CatalogGrid() {
       {mobileThemes.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-muted-foreground">Mobile themes</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {mobileThemes.map((theme) => (
         <Card
           key={theme.id}
@@ -418,11 +418,11 @@ export function CatalogGrid() {
               )}
             </CardContent>
           </Link>
-          <CardFooter className="p-4 pt-0 flex flex-wrap gap-2">
+          <CardFooter className="p-4 pt-0 flex flex-wrap gap-2 items-center">
             <Link href={`/theme/${theme.id}`} className="flex-1 min-w-0">
-              <Button variant="secondary" size="sm" className="w-full gap-2">
+              <Button variant="secondary" size="sm" className="w-full gap-2 min-w-0" title="View & Test">
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                View & Test
+                <span className="hidden sm:inline truncate">View & Test</span>
               </Button>
             </Link>
             {isAdmin && renamingId !== theme.id && (
