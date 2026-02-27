@@ -10,6 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        "docs-header": "hsl(var(--docs-header-bg))",
+        "docs-header-text": "hsl(var(--docs-header-text))",
+        "docs-header-border": "hsl(var(--docs-header-border))",
+        "docs-sidebar": "hsl(var(--docs-sidebar-bg))",
+        "docs-sidebar-border": "hsl(var(--docs-sidebar-border))",
+        "docs-sidebar-active": "hsl(var(--docs-sidebar-active))",
+        "docs-sidebar-active-text": "hsl(var(--docs-sidebar-active-text))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
